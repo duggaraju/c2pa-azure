@@ -5,4 +5,4 @@ members = [
   "lib",
   "cli",
   "function"
-]
+, "keda-blob-storage"]

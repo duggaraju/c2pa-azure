@@ -1,13 +1,15 @@
 /// Azure Code Signing.
 /// This module provides the functionality to sign a file using Azure Code Signing.
 use azure_core::{
-    auth::TokenCredential, error::ErrorKind, ClientOptions, Context, ExponentialRetryOptions,
-    Method, Pipeline, Request, Result, RetryOptions, TelemetryOptions, Url,
+    auth::TokenCredential, base64, error::ErrorKind, sleep, ClientOptions, Context,
+    ExponentialRetryOptions, Method, Pipeline, Request, Result, RetryOptions, TelemetryOptions,
+    Url,
 };
+use c2pa::SigningAlg;
 use std::sync::Arc;
 
-use crate::{auth::AuthorizationPolicy, p7b::P7bCertificate};
-const DEFAULT_API_VERSION: &str = "2023-06-15-preview";
+use crate::{auth::AuthorizationPolicy, p7b::CertificateChain};
+const DEFAULT_API_VERSION: &str = "2022-06-15-preview";
 const DEFAULT_SCOPE: &str = "https://codesigning.azure.net/.default";
 
 #[derive(Clone, Debug)]
@@ -35,10 +37,47 @@ impl TrustedSigningClientOptions {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct TrustedSigningClient {
     endpoint: Url,
     options: TrustedSigningClientOptions,
     pipeline: Pipeline,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SigningRequest {
+    signature_algorithm: String,
+    digest: String,
+}
+
+#[derive(serde::Deserialize, Clone, Eq, PartialEq, Debug)]
+enum Status {
+    InProgress,
+    Succeeded,
+    Failed,
+    TimedOut,
+    NotFound,
+    Running,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
+struct SigningStatus {
+    pub operation_id: String,
+    pub status: Status,
+    pub signature: Option<String>,
+    pub signing_certificate: Option<String>,
+}
+
+impl SigningRequest {
+    pub fn new(alg: SigningAlg, digest: &[u8]) -> Self {
+        Self {
+            signature_algorithm: alg.to_string(),
+            digest: base64::encode(digest),
+        }
+    }
 }
 
 impl TrustedSigningClient {
@@ -80,17 +119,52 @@ impl TrustedSigningClient {
         Ok(pem)
     }
 
-    pub async fn sign(&self, data: Vec<u8>) -> Result<Vec<u8>> {
+    pub async fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
         let url = self.endpoint.join(&format!(
             "/codesigningaccounts/{}/certificateprofiles/{}/sign?api-version={}",
             self.options.account, self.options.certificate_profile, self.options.api_version
         ))?;
         let context = Context::new();
         let mut request = Request::new(url, Method::Post);
-        request.set_body(data);
-        let response = self.pipeline.send(&context, &mut request).await?;
-        let body = response.into_body();
-        let bytes = body.collect().await?;
-        return Ok(bytes.to_vec());
+        request.insert_header("content-type", "application/json");
+        let data = SigningRequest::new(SigningAlg::Ps384, data);
+        request.set_json(&data)?;
+
+        for _ in 0..5 {
+            let response = self.pipeline.send(&context, &mut request).await?;
+            let status: SigningStatus = response.into_body().json().await?;
+            log::info!(
+                "Signing operation: {}, status: {:?}",
+                status.operation_id,
+                status.status
+            );
+            if status.status == Status::Succeeded {
+                log::info!(
+                    "Signing request succeeded operation: {}",
+                    status.operation_id
+                );
+                let signature = base64::decode(status.signature.unwrap())?;
+                return Ok(signature);
+            } else if status.status != Status::InProgress {
+                return Err(azure_core::Error::new(
+                    ErrorKind::Other,
+                    format!("Signing request failed with status: {:?}", status.status),
+                ));
+            }
+            sleep(std::time::Duration::from_millis(250)).await;
+            let url = self.endpoint.join(&format!(
+                "/codesigningaccounts/{}/certificateprofiles/{}/sign/{}?api-version={}",
+                self.options.account,
+                self.options.certificate_profile,
+                status.operation_id,
+                self.options.api_version,
+            ))?;
+            request = Request::new(url, Method::Get);
+        }
+
+        Err(azure_core::Error::new(
+            ErrorKind::Other,
+            "Signing request did not succeed after 5 iterations".to_owned(),
+        ))
     }
 }

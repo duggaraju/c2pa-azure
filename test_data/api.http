@@ -1,0 +1,11 @@
+### Verify file
+POST http://localhost:3000/api/verify
+Content-Type: image/png
+
+< signed.png
+
+### Sign file
+POST http://localhost:3000/api/sign
+Content-Type: image/png
+
+< sample1.png

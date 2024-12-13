@@ -92,7 +92,7 @@ impl CertificateChain {
                     _ => None,
                 })
                 .collect();
-            return Ok(Self::sort_certificates(certs)?);
+            return Self::sort_certificates(certs);
         }
         Err(c2pa::Error::CoseX5ChainMissing)?
     }

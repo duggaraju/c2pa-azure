@@ -5,24 +5,65 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(Windows) Launch",
-            "type": "cppvsdbg",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/target/debug/cli.exe",
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [
-                {
-                    "name": "RUST_BACKTRACE",
-                    "value": "full"
-                },
-                {
-                    "name": "RUST_LOG",
-                    "value": "debug"
-                }
-            ],
-            "console": "externalTerminal",
+            "name": "Cli",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin",
+                    "cli"
+                ]
+            },
             "args": [ "-i", "sample1.png", "-o", "output.png", "-e", "https://eus.codesigning.azure.net/", "-c", "media-provenance-sign", "-a", "ts-3e3ebaf7f0a04bf192c7" ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "full",
+                "RUST_LOG": "info"
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Function",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin",
+                    "function"
+                ]
+            },
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "full",
+                "RUST_LOG": "info",
+                "SIGNING_ENDPOINT": "https://eus.codesigning.azure.net/",
+                "CERTIFICATE_PROFILE": "media-provenance-sign",
+                "SIUGNING_ACCOUNT": "ts-3e3ebaf7f0a04bf192c7" 
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Keda Blob Storage",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin",
+                    "keda-blob-storage"
+                ]
+            },
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_BACKTRACE": "full",
+                "RUST_LOG": "info",
+                "SIGNING_ENDPOINT": "https://eus.codesigning.azure.net/",
+                "CERTIFICATE_PROFILE": "media-provenance-sign",
+                "SINGING_ACCOUNT": "ts-3e3ebaf7f0a04bf192c7",
+                "STORAGE_ACCOUNT": "amsencodermsitest",
+                "INPUT_CONTAINER": "input",
+                "OUTPUT_CONTAINER": "output",
+            },
         }
     ]
 }

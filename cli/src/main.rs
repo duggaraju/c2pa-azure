@@ -1,9 +1,13 @@
 use anyhow::Result;
 use azure_core::Url;
-use azure_identity::create_default_credential;
+use azure_identity::DefaultAzureCredentialBuilder;
 use c2pa_acs::{SigningOptions, TrustedSigner};
 use clap::{arg, command, Parser};
-use std::{fs::File, path::PathBuf};
+use std::{
+    fs::{self, File},
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -30,9 +34,6 @@ struct Arguments {
 
     #[arg(short, long)]
     certificate_profile: String,
-
-    #[arg(short = 'g', long)]
-    algorithm: Option<c2pa::SigningAlg>,
 }
 
 impl Arguments {
@@ -41,16 +42,24 @@ impl Arguments {
             self.endpoint.clone(),
             self.account.clone(),
             self.certificate_profile.clone(),
-            self.algorithm,
         )
     }
 }
+
+const DEFAULT_MANIFEST: &str = r##"
+{
+}
+"##;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::init();
     let args = Arguments::parse();
-    let credentials = create_default_credential()?;
+    let mut builder = DefaultAzureCredentialBuilder::new();
+    if cfg!(debug_assertions) {
+        builder.exclude_managed_identity_credential();
+    }
+    let credentials = Arc::new(builder.build()?);
 
     let options = args.signing_options();
     let mut input = File::open(&args.input)?;
@@ -60,7 +69,19 @@ async fn main() -> Result<()> {
         .extension()
         .map(|x| x.to_str().unwrap())
         .unwrap_or("application/octet-stream");
-    let mut signer = TrustedSigner::new(credentials, options).await?;
+    let manifest_definition = if let Some(manifest) = args.manifest_definition {
+        let path = Path::new(&manifest);
+        if path.exists() {
+            fs::read_to_string(path)?
+        } else {
+            manifest
+        }
+    } else {
+        DEFAULT_MANIFEST.to_owned()
+    };
+
+    let mut signer = TrustedSigner::new(credentials, options, manifest_definition).await?;
     signer.sign(&mut input, &mut output, format).await?;
+    log::info!("Successfully signed the file.");
     Ok(())
 }

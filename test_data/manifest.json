@@ -1,0 +1,41 @@
+{
+  "active_manifest": "urn:uuid:fcaba5c4-6729-4cd7-897d-f342f3ba33e2",
+  "manifests": {
+    "urn:uuid:fcaba5c4-6729-4cd7-897d-f342f3ba33e2": {
+      "claim_generator": "c2pa-rs/0.39.0",
+      "claim_generator_info": [
+        {
+          "name": "c2pa-rs",
+          "version": "0.39.0",
+          "org.cai.c2pa_rs": "0.39.0"
+        }
+      ],
+      "format": "image/png",
+      "instance_id": "xmp:iid:06ac9bb3-8d43-4418-be5a-921355f13e98",
+      "thumbnail": {
+        "format": "image/png",
+        "identifier": "self#jumbf=/c2pa/urn:uuid:fcaba5c4-6729-4cd7-897d-f342f3ba33e2/c2pa.assertions/c2pa.thumbnail.claim.png"
+      },
+      "ingredients": [
+        {
+          "title": "Original File",
+          "format": "png",
+          "instance_id": "xmp:iid:8522c905-85b6-471c-b823-a016a6a7d3d6",
+          "thumbnail": {
+            "format": "image/png",
+            "identifier": "self#jumbf=c2pa.assertions/c2pa.thumbnail.ingredient.png"
+          },
+          "relationship": "parentOf"
+        }
+      ],
+      "assertions": [],
+      "signature_info": {
+        "alg": "Ps384",
+        "issuer": "microsoft.onmicrosoft.com",
+        "cert_serial_number": "1137338386287901728708157869348948298707312321",
+        "time": "2024-12-10T01:08:32+00:00"
+      },
+      "label": "urn:uuid:fcaba5c4-6729-4cd7-897d-f342f3ba33e2"
+    }
+  }
+}
