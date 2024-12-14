@@ -32,7 +32,23 @@ cargo run --bin cli -- -i input.png -o output.png -e https://eus.codesigning.azu
 ```
 ## Azure Container App
 
-Deploy the library as an Azure Container App to automate the signing process for media files uploaded to your Azure storage.
+Deploy the library as an Azure Container App to automate the signing process for media files uploaded to your Azure storage. It needs the following steps.
+
+1. Edit common.bicepparm and container-app.bicepparm with the names of the resources you want to use.
+2. Create the common resoures like azure code signing account, container registry etc.
+```bash
+cd deployment
+az group create group-name -location 'WestUS'
+az deployment group create --resource-group group-name  --template-file common.bicep --parameters common.bicepparam
+```
+3. Build the container and push to the ACR. The registry name is same as what you entered in step 1.
+```bash
+./build.sh -n registry-name
+```
+4. Deploy the continer app with a managed identity and give the required permissions.
+```bash
+az deployment group create --resource-group group-name  --template-file container-app.bicep --parameters container-app.bicepparam
+```
 
 ## Contributing
 
