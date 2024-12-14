@@ -20,10 +20,7 @@ use managed_identity_credential::ManagedIdentityCredential;
 
 mod managed_identity_credential;
 
-const DEFAULT_MANIFEST: &str = r##"
-{
-}
-"##;
+const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
 
 async fn sign_blob(
     input_blob: &BlobClient,

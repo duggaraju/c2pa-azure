@@ -46,10 +46,7 @@ impl Arguments {
     }
 }
 
-const DEFAULT_MANIFEST: &str = r##"
-{
-}
-"##;
+const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
 
 #[tokio::main]
 async fn main() -> Result<()> {

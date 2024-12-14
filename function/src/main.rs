@@ -87,10 +87,7 @@ async fn verify_file(
     ))
 }
 
-const DEFAULT_MANIFEST: &str = r##"
-{
-}
-"##;
+const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {

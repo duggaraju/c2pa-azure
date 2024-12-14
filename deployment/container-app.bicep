@@ -188,6 +188,16 @@ resource containerapp 'Microsoft.App/containerApps@2024-10-02-preview' = {
               name: 'IDENTITY_CLIENT_ID'
               value: appManagedIdentity.properties.clientId
             }
+            /* uncomment for tracing.
+            {
+              name: 'RUST_LOG'
+              value: 'info'
+            }
+            {
+              name: 'RUST_BACKTRACE'
+              value: 'full'
+            }
+            */
           ]
         }
       ]

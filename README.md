@@ -20,11 +20,14 @@ Add the following to your `Cargo.toml`:
 cargo build
 ```
 
+## Manifest and assertsion.
+The default manifest settings are stored in [manifest.json](manifest.json).  It can be edited to add or remove assertsion or ingredients as necessary.
 ## Command Line Utility
 
 ### Adding Content Credentials
 
 ```bash
+az login
 cargo run --bin cli -- -i input.png -o output.png -e https://eus.codesigning.azure.net -a signing_account -c certificate_profile [-m manifest.json]
 ```
 ## Azure Container App

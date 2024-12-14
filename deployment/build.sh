@@ -1,6 +1,6 @@
 #!/bin/bash
 # getopt to get the registry name
-OPTSTRING="n:i"
+OPTSTRING="n:i:"
 
 image_name="c2pa-acs-app"
 while getopts ${OPTSTRING} opt; do
