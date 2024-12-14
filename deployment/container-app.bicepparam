@@ -2,6 +2,7 @@ using './container-app.bicep'
 
 // container registry parameters
 param containerRegistryName = 'c2paacsregistry'
+param imageName = 'c2pa-acs-app'
 
 // storage account parameters
 param storageAccountName = 'c2paacsmediastorage'

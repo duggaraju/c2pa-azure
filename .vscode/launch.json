@@ -59,7 +59,7 @@
                 "RUST_LOG": "info",
                 "SIGNING_ENDPOINT": "https://eus.codesigning.azure.net/",
                 "CERTIFICATE_PROFILE": "media-provenance-sign",
-                "SINGING_ACCOUNT": "ts-3e3ebaf7f0a04bf192c7",
+                "SIGNING_ACCOUNT": "ts-3e3ebaf7f0a04bf192c7",
                 "STORAGE_ACCOUNT": "amsencodermsitest",
                 "INPUT_CONTAINER": "input",
                 "OUTPUT_CONTAINER": "output",

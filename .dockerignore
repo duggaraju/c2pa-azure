@@ -1,4 +1,6 @@
 target/
+.dockerignore
 Dockerfile
 deployment/
+.vscode/
 *.md

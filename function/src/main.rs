@@ -1,6 +1,6 @@
 use azure_core::auth::TokenCredential;
 use azure_identity::DefaultAzureCredentialBuilder;
-use c2pa_acs::{SigningOptions, TrustedSigner, Envconfig};
+use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 use std::fs::{self, File};
 use std::io::{Cursor, Write};
@@ -95,6 +95,9 @@ const DEFAULT_MANIFEST: &str = r##"
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
+    for (key, value) in std::env::vars() {
+        log::info!("{key}: {value}");
+    }
     let mut builder = DefaultAzureCredentialBuilder::new();
     if cfg!(debug_assertions) {
         builder.exclude_managed_identity_credential();

@@ -8,7 +8,7 @@ use std::{
 use azure_core::{
     auth::TokenCredential, date::duration_from_minutes, tokio::fs::FileStreamBuilder,
 };
-use azure_identity::DefaultAzureCredentialBuilder;
+use azure_identity::{DefaultAzureCredentialBuilder, TokenCredentialOptions};
 use azure_storage::prelude::StorageCredentials;
 use azure_storage_blobs::{
     container::operations::BlobItem,
@@ -16,6 +16,9 @@ use azure_storage_blobs::{
 };
 use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
+use managed_identity_credential::ManagedIdentityCredential;
+
+mod managed_identity_credential;
 
 const DEFAULT_MANIFEST: &str = r##"
 {
@@ -114,11 +117,18 @@ async fn process_blobs(
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
-    let mut builder = DefaultAzureCredentialBuilder::new();
-    if cfg!(debug_assertions) {
+
+    let credential: Arc<dyn TokenCredential> = if cfg!(debug_assertions) {
+        let mut builder = DefaultAzureCredentialBuilder::new();
         builder.exclude_managed_identity_credential();
-    }
-    let credential: Arc<dyn TokenCredential> = Arc::new(builder.build()?);
+        Arc::new(builder.build()?)
+    } else {
+        let options = TokenCredentialOptions::default();
+        Arc::new(ManagedIdentityCredential::create_with_user_assigned(
+            options,
+        ))
+    };
+
     let manifest_definition = env::var("MANIFEST_DEFINITION").ok();
     let manifest_definition = if let Some(manifest) = manifest_definition {
         let path = Path::new(&manifest);

@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.94", features = ["backtrace"] }
+async-lock = "3.4.0"
+async-trait = "0.1.83"
 azure_core = { version = "0.21.0", features= ["tokio-fs"] }
 azure_identity = "0.21.0"
 azure_storage = "0.21.0"
@@ -13,5 +15,7 @@ c2pa-acs = { path = "../lib" }
 env_logger = "0.11.5"
 futures = "0.3.31"
 log = "0.4.22"
+serde = "1.0.216"
 tempfile = "3.14.0"
+time = "0.3.37"
 tokio = { version = "1.42.0", features= ["rt", "rt-multi-thread", "macros", "fs"] }

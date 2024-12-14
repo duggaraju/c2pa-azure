@@ -7,8 +7,8 @@ use std::io::{Read, Seek};
 
 pub use c2pa::Error;
 use c2pa::Reader;
-pub use sign::{SigningOptions, TrustedSigner};
 pub use envconfig::Envconfig;
+pub use sign::{SigningOptions, TrustedSigner};
 
 pub async fn verify_file(
     format: &str,

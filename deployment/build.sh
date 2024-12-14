@@ -1,12 +1,17 @@
 #!/bin/bash
 # getopt to get the registry name
-OPTSTRING="n:"
+OPTSTRING="n:i"
 
+image_name="c2pa-acs-app"
 while getopts ${OPTSTRING} opt; do
   case ${opt} in
     n)
       echo "registry name is $OPTARG"
       registry_name=$OPTARG
+      ;;
+    i)
+      echo "image name is $OPTARG"
+      image_name=$OPTARG
       ;;
     ?)
       echo "Invalid option: -${OPTARG}."
@@ -21,6 +26,6 @@ if [ -z "$registry_name" ]; then
 fi
 
 az acr login -n "$registry_name"
-docker build --target keda-blob-storage -t "$registry_name.azurecr.io/keda-blob-storage" ..
-docker push "$registry_name.azurecr.io/keda-blob-storage"
+docker build --target keda-blob-storage -t "$registry_name.azurecr.io/$image_name" ..
+docker push "$registry_name.azurecr.io/$image_name"
  

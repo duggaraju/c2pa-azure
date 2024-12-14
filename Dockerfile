@@ -13,7 +13,7 @@ RUN cargo build --release
 # Start a new stage to create a smaller image without unnecessary build dependencies
 FROM ubuntu AS runtime
 
-RUN apt-get update && apt-get install -y libssl3
+RUN apt-get update && apt-get install -y libssl3 ca-certificates
 
 # Set the working directory
 WORKDIR /usr/local/bin

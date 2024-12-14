@@ -1,6 +1,7 @@
 // parameters for container registry name and storage account name
 @description('Container registry name for the docker images')
 param containerRegistryName string
+param imageName string
 
 @description('The storage account where media files are stored')
 param storageAccountName string
@@ -152,7 +153,7 @@ resource containerapp 'Microsoft.App/containerApps@2024-10-02-preview' = {
       containers: [
         {
           name: containerAppName
-          image: '${containerRegistryName}.azurecr.io/keda-blob-storage:latest'
+          image: '${containerRegistryName}.azurecr.io/${imageName}:latest'
           imageType: 'ContainerImage'
           resources: {
             cpu: 1
@@ -182,6 +183,10 @@ resource containerapp 'Microsoft.App/containerApps@2024-10-02-preview' = {
             {
               name: 'CERTIFICATE_PROFILE'
               value: certificateProfileName
+            }
+            {
+              name: 'IDENTITY_CLIENT_ID'
+              value: appManagedIdentity.properties.clientId
             }
           ]
         }
