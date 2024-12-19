@@ -15,7 +15,7 @@
                     "cli"
                 ]
             },
-            "args": [ "-i", "sample1.png", "-o", "output.png", "-e", "https://eus.codesigning.azure.net/", "-c", "media-provenance-sign", "-a", "ts-3e3ebaf7f0a04bf192c7" ],
+            "args": [ "-i", "test_data/sample1.png", "-o", "output.png", "-e", "https://eus.codesigning.azure.net/", "-c", "media-provenance-sign", "-a", "ts-3e3ebaf7f0a04bf192c7" ],
             "cwd": "${workspaceFolder}",
             "env": {
                 "RUST_BACKTRACE": "full",
