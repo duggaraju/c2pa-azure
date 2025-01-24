@@ -155,8 +155,4 @@ impl AsyncSigner for TrustedSigner {
             .as_ref()
             .map(|x| x.to_string())
     }
-
-    fn direct_cose_handling(&self) -> bool {
-        false
-    }
 }

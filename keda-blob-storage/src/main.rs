@@ -76,7 +76,8 @@ async fn process_blob(
         &output_blob,
         signer,
         &properties.blob.properties.content_type,
-    ).await;
+    )
+    .await;
 
     lease_client.release().await?;
     if result.is_ok() {

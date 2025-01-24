@@ -5,14 +5,14 @@ edition = "2021"
 
 [dependencies]
 azure_core = { version  = "0.21.0" }
-c2pa = { version = "0.39.0", features = ["unstable_api", "pdf", "add_thumbnails", "fetch_remote_manifests", "openssl"]}
-async-trait = "0.1.83"
+c2pa = { version = "0.42.0", features = ["unstable_api", "pdf", "add_thumbnails", "fetch_remote_manifests", "openssl"]}
+async-trait = "0.1.85"
 cms = "0.2.3"
 bytes = "1.9.0"
-log = "0.4.22"
-serde_json = "1.0.133"
+log = "0.4.25"
+serde_json = "1.0.137"
 chksum-hash-sha2-384 = "0.0.1"
-serde = { version = "1.0.215", features = ["derive"] }
+serde = { version = "1.0.217", features = ["derive"] }
 envconfig = "0.11.0"
 
 [dev-dependencies]
