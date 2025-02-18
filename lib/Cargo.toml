@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 azure_core = { version  = "0.21.0" }
-c2pa = { version = "0.46.0", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests", "openssl"]}
+c2pa = { version = "0.46.0", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests"]}
 async-trait = "0.1.85"
 cms = "0.2.3"
 bytes = "1.9.0"
