@@ -70,7 +70,13 @@ impl CertificateChain {
         // Reverse iterate and convert the certifcates
         list.into_iter()
             .rev()
-            .inspect(|c| log::debug!("cert: Subject= ({}) Issuer= ({})", c.tbs_certificate.subject, c.tbs_certificate.issuer))
+            .inspect(|c| {
+                log::debug!(
+                    "cert: Subject= ({}) Issuer= ({})",
+                    c.tbs_certificate.subject,
+                    c.tbs_certificate.issuer
+                )
+            })
             .map(|c| c.to_der().map_err(|_| c2pa::Error::CoseInvalidCert))
             .collect()
     }
