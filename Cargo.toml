@@ -4,5 +4,8 @@ resolver = "2"
 members = [
   "lib",
   "cli",
-  "function"
-, "keda-blob-storage"]
+  "function",
+  "keda-blob-storage"
+]
+
+#exclude = [ "keda-blob-storage" ]

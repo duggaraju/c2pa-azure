@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use azure_core::{auth::TokenCredential, error::ErrorKind, Url};
+use azure_core::{credentials::TokenCredential, error::ErrorKind, http::Url};
 use c2pa::{AsyncSigner, Builder, SigningAlg};
 use envconfig::Envconfig;
 use serde_json::json;

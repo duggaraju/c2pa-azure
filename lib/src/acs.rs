@@ -1,10 +1,17 @@
 /// Azure Code Signing.
 /// This module provides the functionality to sign a file using Azure Code Signing.
 use azure_core::{
-    auth::TokenCredential, base64, error::ErrorKind, sleep, ClientOptions, Context,
-    ExponentialRetryOptions, Method, Pipeline, Request, Result, RetryOptions, TelemetryOptions,
-    Url,
+    base64,
+    credentials::TokenCredential,
+    error::ErrorKind,
+    http::{
+        ClientOptions, Context, ExponentialRetryOptions, Method, Pipeline, Request, Response,
+        RetryOptions, TelemetryOptions, Url,
+    },
+    sleep::sleep,
+    Result,
 };
+use bytes::Bytes;
 use c2pa::SigningAlg;
 use std::sync::Arc;
 
@@ -23,16 +30,22 @@ pub struct TrustedSigningClientOptions {
 
 impl TrustedSigningClientOptions {
     pub fn new(account: &str, certificate_profile: &str) -> Self {
+        let _ = TelemetryOptions {
+            application_id: Some(format!("c2pa-azure/{}", env!("CARGO_PKG_VERSION"))),
+        };
         Self {
             api_version: DEFAULT_API_VERSION.to_owned(),
             account: account.to_owned(),
             certificate_profile: certificate_profile.to_owned(),
             scope: DEFAULT_SCOPE.to_owned(),
-            client_options: ClientOptions::default()
-                .retry(RetryOptions::exponential(
-                    ExponentialRetryOptions::default().max_retries(5u32),
-                ))
-                .telemetry(TelemetryOptions::default().application_id("c2pa-prss")),
+            client_options: ClientOptions {
+                retry: Some(RetryOptions::exponential(ExponentialRetryOptions {
+                    max_retries: 5,
+                    max_delay: std::time::Duration::from_secs(10),
+                    ..Default::default()
+                })),
+                ..Default::default()
+            },
         }
     }
 }
@@ -109,8 +122,8 @@ impl TrustedSigningClient {
         let context = Context::new();
         let mut request = Request::new(url, Method::Get);
         request.insert_header("accept", "application/pkcs7-mime");
-        let response = self.pipeline.send(&context, &mut request).await?;
-        let body = response.into_body();
+        let response: Response<Bytes> = self.pipeline.send(&context, &mut request).await?;
+        let body = response.into_raw_body();
         let bytes = body.collect().await?;
         let cert = CertificateChain::from_cert_chain(bytes);
         let pem = cert
@@ -131,8 +144,9 @@ impl TrustedSigningClient {
         request.set_json(&data)?;
 
         for _ in 0..5 {
-            let response = self.pipeline.send(&context, &mut request).await?;
-            let status: SigningStatus = response.into_body().json().await?;
+            let response: Response<SigningStatus> =
+                self.pipeline.send(&context, &mut request).await?;
+            let status: SigningStatus = response.into_json_body().await?;
             log::info!(
                 "Signing operation: {}, status: {:?}",
                 status.operation_id,

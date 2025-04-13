@@ -1,5 +1,11 @@
 use async_trait::async_trait;
-use azure_core::{auth::TokenCredential, Context, Policy, PolicyResult, Request};
+use azure_core::{
+    credentials::TokenCredential,
+    http::{
+        policies::{Policy, PolicyResult},
+        Context, Request,
+    },
+};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]

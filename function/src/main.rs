@@ -1,4 +1,4 @@
-use azure_core::auth::TokenCredential;
+use azure_core::credentials::TokenCredential;
 use azure_identity::DefaultAzureCredentialBuilder;
 use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
@@ -96,10 +96,10 @@ async fn main() -> Result<(), anyhow::Error> {
         log::info!("{key}: {value}");
     }
     let mut builder = DefaultAzureCredentialBuilder::new();
-    if cfg!(debug_assertions) {
-        builder.exclude_managed_identity_credential();
+    if !cfg!(debug_assertions) {
+        builder.exclude_azure_cli_credential();
     }
-    let credentials: Arc<dyn TokenCredential> = Arc::new(builder.build()?);
+    let credentials: Arc<dyn TokenCredential> = builder.build()?;
     let manifest_definition = env::var("MANIFEST_DEFINITION").ok();
     let manifest_definition = if let Some(manifest) = manifest_definition {
         let path = Path::new(&manifest);

@@ -1,12 +1,11 @@
 use anyhow::Result;
-use azure_core::Url;
+use azure_core::http::Url;
 use azure_identity::DefaultAzureCredentialBuilder;
 use c2pa_acs::{SigningOptions, TrustedSigner};
 use clap::{arg, command, Parser};
 use std::{
     fs::{self, File},
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
 #[derive(Parser, Debug)]
@@ -53,10 +52,10 @@ async fn main() -> Result<()> {
     env_logger::init();
     let args = Arguments::parse();
     let mut builder = DefaultAzureCredentialBuilder::new();
-    if cfg!(debug_assertions) {
-        builder.exclude_managed_identity_credential();
+    if !cfg!(debug_assertions) {
+        builder.exclude_azure_cli_credential();
     }
-    let credentials = Arc::new(builder.build()?);
+    let credentials = builder.build()?;
 
     let options = args.signing_options();
     let mut input = File::open(&args.input)?;
