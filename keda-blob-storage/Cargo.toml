@@ -1,21 +1,20 @@
 [package]
 name = "keda-blob-storage"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 anyhow = { version = "1.0.95", features = ["backtrace"] }
 async-lock = "3.4.0"
 async-trait = "0.1.85"
-azure_core = { version = "0.21.0", features= ["tokio-fs"] }
-azure_identity = "0.21.0"
-azure_storage = "0.21.0"
-azure_storage_blobs = "0.21.0"
+azure_core = { version = "0.24.0" }
+azure_identity = "0.24.0"
+azure_storage_blob = "0.1.0"
 c2pa-acs = { path = "../lib" }
-env_logger = "0.11.6"
+env_logger = "0.11.8"
 futures = "0.3.31"
-log = "0.4.25"
-serde = "1.0.217"
+log = "0.4.27"
+serde = "1.0.219"
 tempfile = "3.15.0"
-time = "0.3.37"
-tokio = { version = "1.44.2", features= ["rt", "rt-multi-thread", "macros", "fs"] }
+time = "0.3.41"
+tokio = { version = "1.45.0", features= ["rt", "rt-multi-thread", "macros", "fs"] }

@@ -1,8 +1,8 @@
 // PRSS retursn in p7b format. This converts to PEM format.
 use bytes::Bytes;
+use cms::cert::CertificateChoices;
 use cms::cert::x509::certificate::CertificateInner;
 use cms::cert::x509::der::{Decode, Encode};
-use cms::cert::CertificateChoices;
 use cms::{content_info::ContentInfo, signed_data::SignedData};
 use std::collections::HashMap;
 

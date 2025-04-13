@@ -1,7 +1,7 @@
 /// Azure Code Signing.
 /// This module provides the functionality to sign a file using Azure Code Signing.
 use azure_core::{
-    base64,
+    Result, base64,
     credentials::TokenCredential,
     error::ErrorKind,
     http::{
@@ -9,7 +9,6 @@ use azure_core::{
         RetryOptions, TelemetryOptions, Url,
     },
     sleep::sleep,
-    Result,
 };
 use bytes::Bytes;
 use c2pa::SigningAlg;

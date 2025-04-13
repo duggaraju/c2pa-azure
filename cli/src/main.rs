@@ -2,7 +2,7 @@ use anyhow::Result;
 use azure_core::http::Url;
 use azure_identity::DefaultAzureCredentialBuilder;
 use c2pa_acs::{SigningOptions, TrustedSigner};
-use clap::{arg, command, Parser};
+use clap::{Parser, arg, command};
 use std::{
     fs::{self, File},
     path::{Path, PathBuf},

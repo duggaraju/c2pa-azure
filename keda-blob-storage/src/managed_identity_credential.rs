@@ -1,16 +1,14 @@
 use async_lock::RwLock;
 use azure_core::{
-    auth::{AccessToken, Secret, TokenCredential},
+    credentials::{AccessToken, Secret, TokenCredential},
     error::{Error, ErrorKind},
-    from_json,
-    headers::HeaderName,
-    HttpClient, Method, Request, StatusCode, Url,
+    http::{HttpClient, Method, Request, StatusCode, Url, headers::HeaderName},
 };
 use azure_identity::TokenCredentialOptions;
 use log::trace;
 use serde::{
-    de::{self, Deserializer},
     Deserialize,
+    de::{self, Deserializer},
 };
 use std::{collections::HashMap, env, future::Future, str, sync::Arc, time::Duration};
 use time::OffsetDateTime;
@@ -121,26 +119,25 @@ impl ManagedIdentityCredential {
                     return Err(Error::message(
                         ErrorKind::Credential,
                         "the requested identity has not been assigned to this resource",
-                    ))
+                    ));
                 }
                 StatusCode::BadGateway | StatusCode::GatewayTimeout => {
                     return Err(Error::message(
                         ErrorKind::Credential,
                         "the request failed due to a gateway error",
-                    ))
+                    ));
                 }
                 rsp_status => {
-                    return Err(ErrorKind::http_response_from_parts(
+                    return Err(ErrorKind::http_response(
                         rsp_status,
-                        &rsp_headers,
-                        &rsp_body,
+                        Some("Error from MI client.".into()),
                     )
-                    .into_error())
+                    .into_error());
                 }
             }
         }
 
-        let token_response: MsiTokenResponse = from_json(&rsp_body)?;
+        let token_response: MsiTokenResponse = rsp_body.json().await?;
         Ok(AccessToken::new(
             token_response.access_token,
             token_response.expires_on,
@@ -152,10 +149,6 @@ impl ManagedIdentityCredential {
 impl TokenCredential for ManagedIdentityCredential {
     async fn get_token(&self, scopes: &[&str]) -> azure_core::Result<AccessToken> {
         self.cache.get_token(scopes, self.get_token(scopes)).await
-    }
-
-    async fn clear_cache(&self) -> azure_core::Result<()> {
-        self.cache.clear().await
     }
 }
 

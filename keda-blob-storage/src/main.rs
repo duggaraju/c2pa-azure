@@ -5,16 +5,11 @@ use std::{
     sync::Arc,
 };
 
-use azure_core::{
-    auth::TokenCredential, date::duration_from_minutes, tokio::fs::FileStreamBuilder,
-};
+use azure_core::{credentials::TokenCredential, date::duration_from_minutes};
 use azure_identity::{DefaultAzureCredentialBuilder, TokenCredentialOptions};
-use azure_storage::prelude::StorageCredentials;
-use azure_storage_blobs::{
-    container::operations::BlobItem,
-    prelude::{BlobClient, ClientBuilder, ContainerClient},
-};
+use azure_storage_blob::{BlobClient, clients::BlobContainerClient};
 use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
+use env_logger::builder;
 use futures::StreamExt;
 use managed_identity_credential::ManagedIdentityCredential;
 
@@ -67,7 +62,7 @@ async fn process_blob(
     signer: &mut TrustedSigner,
 ) -> anyhow::Result<()> {
     log::info!("Procesing blob {}", input_blob.blob_name());
-    let properties = input_blob.get_properties().await?;
+    let properties = input_blob.get_properties(None).await?;
 
     let lease = input_blob.acquire_lease(duration_from_minutes(1)).await?;
     let lease_client = input_blob.blob_lease_client(lease.lease_id);
@@ -81,15 +76,15 @@ async fn process_blob(
 
     lease_client.release().await?;
     if result.is_ok() {
-        input_blob.delete().await?;
+        input_blob.delete(None).await?;
     }
     result
 }
 
 // Process the first page of blobs.
 async fn process_blobs(
-    input_container: ContainerClient,
-    output_container: ContainerClient,
+    input_container: BlobContainerClient,
+    output_container: BlobContainerClient,
     signer: &mut TrustedSigner,
 ) -> anyhow::Result<()> {
     let mut blobs = input_container.list_blobs().into_stream();
@@ -118,10 +113,14 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let credential: Arc<dyn TokenCredential> = if cfg!(debug_assertions) {
         let mut builder = DefaultAzureCredentialBuilder::new();
-        builder.exclude_managed_identity_credential();
         Arc::new(builder.build()?)
     } else {
         let options = TokenCredentialOptions::default();
+        builder
+            .exclude_environment_credential()
+            .exclude_cli_credential()
+            .exclude_visual_studio_code_credential()
+            .exclude_visual_studio_credential();
         Arc::new(ManagedIdentityCredential::create_with_user_assigned(
             options,
         ))
@@ -143,11 +142,10 @@ async fn main() -> Result<(), anyhow::Error> {
     let input_container_name = std::env::var("INPUT_CONTAINER").expect("missing INPUT_CONTAINER");
     let output_container_name =
         std::env::var("OUTPUT_CONTAINER").expect("missing OUTPUT_CONTAINER");
-    let storage_credentials = StorageCredentials::token_credential(credential.clone());
-    let input_container = ClientBuilder::new(account.clone(), storage_credentials.clone())
-        .container_client(&input_container_name);
+    let input_container =
+        BlobContainerClient::new(&account, input_container_name, credential, None)?;
     let output_container =
-        ClientBuilder::new(account, storage_credentials).container_client(&output_container_name);
+        BlobContainerClient::new(&account, output_container_name, credential, None)?;
     let options = SigningOptions::init_from_env()?;
     let mut signer = TrustedSigner::new(credential, options, manifest_definition).await?;
     process_blobs(input_container, output_container, &mut signer).await?;

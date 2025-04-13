@@ -9,7 +9,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::{env, io::Seek};
 use tempfile::NamedTempFile;
-use warp::{reject::Reject, Buf, Error, Filter, Rejection, Reply, Stream};
+use warp::{Buf, Error, Filter, Rejection, Reply, Stream, reject::Reject};
 
 #[allow(dead_code)]
 #[derive(Debug)]

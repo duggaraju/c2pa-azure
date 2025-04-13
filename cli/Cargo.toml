@@ -1,15 +1,15 @@
 [package]
 name = "cli"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-anyhow = { version = "1.0.95", features = ["backtrace"] }
-azure_identity = "0.23.0"
+anyhow = { version = "1.0.98", features = ["backtrace"] }
+azure_identity = "0.24.0"
 c2pa-acs = { path = "../lib" }
 clap_derive = "4.5.32"
-clap= { version = "4.5.36", features = ["derive"] }
+clap= { version = "4.5.39", features = ["derive"] }
 env_logger = "0.11.8"
-tokio = { version = "1.44.2", features= ["rt", "rt-multi-thread", "macros"] }
-azure_core = "0.23.0"
+tokio = { version = "1.45.1", features= ["rt", "rt-multi-thread", "macros"] }
+azure_core = "0.24.0"
 log = "0.4.27"

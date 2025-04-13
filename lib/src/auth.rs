@@ -2,8 +2,8 @@ use async_trait::async_trait;
 use azure_core::{
     credentials::TokenCredential,
     http::{
-        policies::{Policy, PolicyResult},
         Context, Request,
+        policies::{Policy, PolicyResult},
     },
 };
 use std::sync::Arc;
