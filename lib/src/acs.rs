@@ -121,7 +121,7 @@ impl TrustedSigningClient {
         let context = Context::new();
         let mut request = Request::new(url, Method::Get);
         request.insert_header("accept", "application/pkcs7-mime");
-        let response: Response<Bytes> = self.pipeline.send(&context, &mut request).await?;
+        let response: Response<Bytes> = self.pipeline.send(&context, &mut request).await?.into();
         let body = response.into_raw_body();
         let bytes = body.collect().await?;
         let cert = CertificateChain::from_cert_chain(bytes);
@@ -144,8 +144,8 @@ impl TrustedSigningClient {
 
         for _ in 0..5 {
             let response: Response<SigningStatus> =
-                self.pipeline.send(&context, &mut request).await?;
-            let status: SigningStatus = response.into_json_body().await?;
+                self.pipeline.send(&context, &mut request).await?.into();
+            let status: SigningStatus = response.into_body().await?;
             log::info!(
                 "Signing operation: {}, status: {:?}",
                 status.operation_id,

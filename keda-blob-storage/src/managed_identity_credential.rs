@@ -1,8 +1,8 @@
 use async_lock::RwLock;
 use azure_core::{
-    credentials::{AccessToken, Secret, TokenCredential},
+    credentials::{AccessToken, Secret, TokenCredential, TokenRequestOptions},
     error::{Error, ErrorKind},
-    http::{HttpClient, Method, Request, StatusCode, Url, headers::HeaderName},
+    http::{headers::HeaderName, HttpClient, Method, Request, StatusCode, Url},
 };
 use azure_identity::TokenCredentialOptions;
 use log::trace;
@@ -147,7 +147,7 @@ impl ManagedIdentityCredential {
 
 #[async_trait::async_trait]
 impl TokenCredential for ManagedIdentityCredential {
-    async fn get_token(&self, scopes: &[&str]) -> azure_core::Result<AccessToken> {
+    async fn get_token(&self, scopes: &[&str], _: Option<TokenRequestOptions>) -> azure_core::Result<AccessToken> {
         self.cache.get_token(scopes, self.get_token(scopes)).await
     }
 }

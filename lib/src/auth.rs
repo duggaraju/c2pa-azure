@@ -31,7 +31,7 @@ impl Policy for AuthorizationPolicy {
         request: &mut Request,
         next: &[Arc<dyn Policy>],
     ) -> PolicyResult {
-        let token = self.token_credential.get_token(&[&self.scope]).await?;
+        let token = self.token_credential.get_token(&[&self.scope], None).await?;
         request.insert_header("authorization", format!("Bearer {}", token.token.secret()));
         next[0].send(ctx, request, &next[1..]).await
     }

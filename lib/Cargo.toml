@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-azure_core = { version  = "0.24.0" }
+azure_core = { version  = "0.25.0" }
 async-trait = "0.1.88"
 cms = "0.2.3"
 bytes = "1.10.1"
@@ -15,10 +15,10 @@ serde = { version = "1.0.219", features = ["derive"] }
 envconfig = "0.11.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-c2pa = { version = "0.54.0", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests"]}
+c2pa = { version = "0.55.0", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests"]}
 
 [target.'cfg(target_os = "windows")'.dependencies]
-c2pa = { version = "0.54.0", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests", "rust_native_crypto"]}
+c2pa = { version = "0.55.0", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests", "rust_native_crypto"]}
 
 [dev-dependencies]
 tokio = { version = "1.45.1", features= ["rt", "rt-multi-thread", "macros"] }

@@ -7,9 +7,8 @@ use std::{
 
 use azure_core::{credentials::TokenCredential, date::duration_from_minutes};
 use azure_identity::{DefaultAzureCredentialBuilder, TokenCredentialOptions};
-use azure_storage_blob::{BlobClient, clients::BlobContainerClient};
+use azure_storage_blob::{clients::BlobContainerClient, models::BlobClientDownloadResult, BlobClient};
 use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
-use env_logger::builder;
 use futures::StreamExt;
 use managed_identity_credential::ManagedIdentityCredential;
 
@@ -24,8 +23,9 @@ async fn sign_blob(
     content_type: &str,
 ) -> anyhow::Result<()> {
     let mut input = tempfile::tempfile()?;
-    let mut stream = input_blob.get().into_stream();
     log::info!("Downloading blob {} ...", input_blob.blob_name());
+    let response = input_blob.download(None).await?;
+    let stream: BlobClientDownloadResult = response.into_raw_body().into();
     while let Some(res) = stream.next().await {
         let mut data = res?.data;
         while let Some(chunk) = data.next().await {
@@ -87,19 +87,20 @@ async fn process_blobs(
     output_container: BlobContainerClient,
     signer: &mut TrustedSigner,
 ) -> anyhow::Result<()> {
-    let mut blobs = input_container.list_blobs().into_stream();
+    let mut blobs = input_container.list_blobs(None)?;
     let page = blobs.next().await;
     if let Some(page) = page {
         let page = page?;
-        for item in page.blobs.items {
-            if let BlobItem::Blob(blob) = item {
-                let input_blob = input_container.blob_client(&blob.name);
-                let output_blob = output_container.blob_client(&blob.name);
+        for item  in page.into_body().await {
+            for blob in item.segment.blob_items.iter() {
+                let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
+                let input_blob = input_container.blob_client(name.clone());
+                let output_blob = output_container.blob_client(name.clone());
                 let result = process_blob(input_blob, output_blob, signer).await;
                 if let Err(err) = result {
                     log::error!("Error processing blob: {:?}", err);
                 } else {
-                    log::info!("Blob {} processed successfully", blob.name);
+                    log::info!("Blob {} processed successfully", name);
                 }
             }
         }
@@ -110,17 +111,15 @@ async fn process_blobs(
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
-
     let credential: Arc<dyn TokenCredential> = if cfg!(debug_assertions) {
-        let mut builder = DefaultAzureCredentialBuilder::new();
-        Arc::new(builder.build()?)
+        let builder = DefaultAzureCredentialBuilder::new();
+        builder.build()?
     } else {
-        let options = TokenCredentialOptions::default();
+        let mut builder = DefaultAzureCredentialBuilder::new();
         builder
-            .exclude_environment_credential()
-            .exclude_cli_credential()
-            .exclude_visual_studio_code_credential()
-            .exclude_visual_studio_credential();
+            .exclude_azure_cli_credential()
+            .exclude_azure_developer_cli_credential();
+        let options = TokenCredentialOptions::default();
         Arc::new(ManagedIdentityCredential::create_with_user_assigned(
             options,
         ))
@@ -143,9 +142,9 @@ async fn main() -> Result<(), anyhow::Error> {
     let output_container_name =
         std::env::var("OUTPUT_CONTAINER").expect("missing OUTPUT_CONTAINER");
     let input_container =
-        BlobContainerClient::new(&account, input_container_name, credential, None)?;
+        BlobContainerClient::new(&account, input_container_name, credential.clone(), None)?;
     let output_container =
-        BlobContainerClient::new(&account, output_container_name, credential, None)?;
+        BlobContainerClient::new(&account, output_container_name, credential.clone(), None)?;
     let options = SigningOptions::init_from_env()?;
     let mut signer = TrustedSigner::new(credential, options, manifest_definition).await?;
     process_blobs(input_container, output_container, &mut signer).await?;
