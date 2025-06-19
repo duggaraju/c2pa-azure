@@ -256,25 +256,6 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "azure_core"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f5e6bcc9dfd4587f3132818b6922b9157f00a4df7fd7bf76395ddf37f58983d"
-dependencies = [
- "async-lock",
- "async-trait",
- "bytes",
- "futures",
- "pin-project",
- "rustc_version",
- "serde",
- "serde_json",
- "tracing",
- "typespec 0.4.0",
- "typespec_client_core 0.3.0",
-]
-
-[[package]]
-name = "azure_core"
 version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "82c33c072c9d87777262f35abfe2a64b609437076551d4dac8373e60f0e3fde9"
@@ -288,27 +269,8 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "typespec 0.5.0",
- "typespec_client_core 0.4.0",
-]
-
-[[package]]
-name = "azure_identity"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "640a7f73688fee89da3addbeee9cf6eb5b1dfba0b98c2005263d9da88192bb8f"
-dependencies = [
- "async-lock",
- "async-trait",
- "azure_core 0.24.0",
- "futures",
- "oauth2",
- "pin-project",
- "serde",
- "time",
- "tracing",
- "typespec_client_core 0.3.0",
- "url",
+ "typespec",
+ "typespec_client_core",
 ]
 
 [[package]]
@@ -319,13 +281,13 @@ checksum = "4fb64e97087965481c94f1703c57e678df09df73e2cdaee8952558f9c6c7d100"
 dependencies = [
  "async-lock",
  "async-trait",
- "azure_core 0.25.0",
+ "azure_core",
  "futures",
  "pin-project",
  "serde",
  "time",
  "tracing",
- "typespec_client_core 0.4.0",
+ "typespec_client_core",
  "url",
 ]
 
@@ -336,10 +298,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b31cb2869e457ce202826360661321f56599fd392678f8705ff09178872d923"
 dependencies = [
  "async-trait",
- "azure_core 0.25.0",
+ "azure_core",
  "serde",
  "time",
- "typespec_client_core 0.4.0",
+ "typespec_client_core",
  "url",
  "uuid",
 ]
@@ -358,12 +320,6 @@ dependencies = [
  "rustc-demangle",
  "windows-targets",
 ]
-
-[[package]]
-name = "base-x"
-version = "0.2.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cbbc9d0964165b47557570cce6c952866c2678457aca742aafc9fb771d30270"
 
 [[package]]
 name = "base16ct"
@@ -504,9 +460,9 @@ checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
 name = "c2pa"
-version = "0.55.0"
+version = "0.56.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52032f2a548ca0348f6361ea57373411fa54a3bdee9ff57aa6f14c4ea749f0c6"
+checksum = "456d137033e796c90bfdf75db294ef9ce973f7f0dc20ec4bebec17d5d826df91"
 dependencies = [
  "asn1-rs",
  "async-generic",
@@ -514,6 +470,7 @@ dependencies = [
  "async-trait",
  "atree",
  "base64 0.22.1",
+ "base64ct",
  "bcder",
  "byteorder",
  "byteordered",
@@ -529,6 +486,7 @@ dependencies = [
  "der",
  "ecdsa",
  "ed25519-dalek",
+ "env_logger 0.10.2",
  "extfmt",
  "getrandom 0.2.16",
  "hex",
@@ -544,7 +502,6 @@ dependencies = [
  "lopdf",
  "memchr",
  "mp4",
- "multibase",
  "nom",
  "non-empty-string",
  "nonempty-collections",
@@ -606,7 +563,7 @@ name = "c2pa-acs"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "azure_core 0.25.0",
+ "azure_core",
  "bytes",
  "c2pa",
  "chksum-hash-sha2-384",
@@ -751,12 +708,12 @@ name = "cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "azure_core 0.25.0",
- "azure_identity 0.25.0",
+ "azure_core",
+ "azure_identity",
  "c2pa-acs",
  "clap",
  "clap_derive",
- "env_logger",
+ "env_logger 0.11.8",
  "log",
  "tokio",
 ]
@@ -1041,26 +998,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
 
 [[package]]
-name = "data-encoding-macro"
-version = "0.1.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47ce6c96ea0102f01122a185683611bd5ac8d99e62bc59dd12e6bda344ee673d"
-dependencies = [
- "data-encoding",
- "data-encoding-macro-internal",
-]
-
-[[package]]
-name = "data-encoding-macro-internal"
-version = "0.1.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
-dependencies = [
- "data-encoding",
- "syn 2.0.101",
-]
-
-[[package]]
 name = "delegate"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1257,6 +1194,19 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cd405aab171cb85d6735e5c8d9db038c17d3ca007a4d2c25f337935c3d90580"
+dependencies = [
+ "humantime",
+ "is-terminal",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
+name = "env_logger"
 version = "0.11.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c863f0904021b108aa8b2f55046443e6b1ebde8fd4a15c399893aae4fa069f"
@@ -1413,10 +1363,10 @@ name = "function"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "azure_core 0.24.0",
- "azure_identity 0.24.0",
+ "azure_core",
+ "azure_identity",
  "c2pa-acs",
- "env_logger",
+ "env_logger 0.11.8",
  "futures",
  "log",
  "tempfile",
@@ -1662,6 +1612,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hermit-abi"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
+
+[[package]]
 name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1764,6 +1720,12 @@ name = "httpdate"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
+
+[[package]]
+name = "humantime"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b112acc8b3adf4b107a8ec20977da0273a8c386765a3ec0229bd500a1443f9f"
 
 [[package]]
 name = "hyper"
@@ -2105,6 +2067,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "is-terminal"
+version = "0.4.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e04d7f318608d35d4b61ddd75cbdaee86b023ebe2bd5a66ee0915f0bf93095a9"
+dependencies = [
+ "hermit-abi",
+ "libc",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2189,11 +2162,11 @@ dependencies = [
  "anyhow",
  "async-lock",
  "async-trait",
- "azure_core 0.25.0",
- "azure_identity 0.25.0",
+ "azure_core",
+ "azure_identity",
  "azure_storage_blob",
  "c2pa-acs",
- "env_logger",
+ "env_logger 0.11.8",
  "futures",
  "log",
  "serde",
@@ -2360,17 +2333,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "multibase"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b3539ec3c1f04ac9748a260728e855f261b4977f5c3406612c884564f329404"
-dependencies = [
- "base-x",
- "data-encoding",
- "data-encoding-macro",
-]
-
-[[package]]
 name = "native-tls"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2490,25 +2452,6 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
  "libm",
-]
-
-[[package]]
-name = "oauth2"
-version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51e219e79014df21a225b1860a479e2dcd7cbd9130f4defd4bd0e191ea31d67d"
-dependencies = [
- "base64 0.22.1",
- "chrono",
- "getrandom 0.2.16",
- "http 1.3.1",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "serde_path_to_error",
- "sha2",
- "thiserror 1.0.69",
- "url",
 ]
 
 [[package]]
@@ -3569,16 +3512,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_path_to_error"
-version = "0.1.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59fab13f937fa393d08645bf3a84bdfe86e296747b506ada67bb15f10f218b2a"
-dependencies = [
- "itoa",
- "serde",
-]
-
-[[package]]
 name = "serde_spanned"
 version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3844,6 +3777,15 @@ dependencies = [
  "once_cell",
  "rustix",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "termcolor"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
+dependencies = [
+ "winapi-util",
 ]
 
 [[package]]
@@ -4192,18 +4134,6 @@ checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
 
 [[package]]
 name = "typespec"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2cb5cb7292822e6d81f385ce512e0a5936a8c93cb194d2ff41477dfd8d1e21f"
-dependencies = [
- "base64 0.22.1",
- "serde",
- "serde_json",
- "url",
-]
-
-[[package]]
-name = "typespec"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04c7a952f1f34257f945fc727b20defe7a3c01c05ddd42925977626cfa6e62ab"
@@ -4212,32 +4142,6 @@ dependencies = [
  "serde",
  "serde_json",
  "url",
-]
-
-[[package]]
-name = "typespec_client_core"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a543a33b2bd2b918a6f487522d4df324c194cc3e9ea89871a202dd237713a61"
-dependencies = [
- "async-trait",
- "base64 0.22.1",
- "bytes",
- "dyn-clone",
- "futures",
- "getrandom 0.2.16",
- "pin-project",
- "rand 0.8.5",
- "reqwest",
- "serde",
- "serde_json",
- "time",
- "tokio",
- "tracing",
- "typespec 0.4.0",
- "typespec_macros 0.3.0",
- "url",
- "uuid",
 ]
 
 [[package]]
@@ -4261,22 +4165,10 @@ dependencies = [
  "time",
  "tokio",
  "tracing",
- "typespec 0.5.0",
- "typespec_macros 0.4.0",
+ "typespec",
+ "typespec_macros",
  "url",
  "uuid",
-]
-
-[[package]]
-name = "typespec_macros"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e7ed5cbd82b54e3d7562822435165054822aa54ef30cd8600ed2202fe1b720c"
-dependencies = [
- "proc-macro2",
- "quote",
- "rustc_version",
- "syn 2.0.101",
 ]
 
 [[package]]
@@ -4346,7 +4238,6 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
- "serde",
 ]
 
 [[package]]
@@ -4576,6 +4467,15 @@ name = "weezl"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a751b3277700db47d3e574514de2eced5e54dc8a5436a3bf7a0b248b2cee16f3"
+
+[[package]]
+name = "winapi-util"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
+dependencies = [
+ "windows-sys 0.59.0",
+]
 
 [[package]]
 name = "windows-core"

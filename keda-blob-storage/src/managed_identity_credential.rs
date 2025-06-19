@@ -2,7 +2,7 @@ use async_lock::RwLock;
 use azure_core::{
     credentials::{AccessToken, Secret, TokenCredential, TokenRequestOptions},
     error::{Error, ErrorKind},
-    http::{headers::HeaderName, HttpClient, Method, Request, StatusCode, Url},
+    http::{HttpClient, Method, Request, StatusCode, Url, headers::HeaderName},
 };
 use azure_identity::TokenCredentialOptions;
 use log::trace;
@@ -137,7 +137,7 @@ impl ManagedIdentityCredential {
             }
         }
 
-        let token_response: MsiTokenResponse = rsp_body.json().await?;
+        let token_response: MsiTokenResponse = serde_json::from(rsp_body).await?;
         Ok(AccessToken::new(
             token_response.access_token,
             token_response.expires_on,
@@ -147,7 +147,11 @@ impl ManagedIdentityCredential {
 
 #[async_trait::async_trait]
 impl TokenCredential for ManagedIdentityCredential {
-    async fn get_token(&self, scopes: &[&str], _: Option<TokenRequestOptions>) -> azure_core::Result<AccessToken> {
+    async fn get_token(
+        &self,
+        scopes: &[&str],
+        _: Option<TokenRequestOptions>,
+    ) -> azure_core::Result<AccessToken> {
         self.cache.get_token(scopes, self.get_token(scopes)).await
     }
 }

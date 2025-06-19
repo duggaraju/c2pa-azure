@@ -1,18 +1,17 @@
+mod managed_identity_credential;
 use std::{
     env, fs,
-    io::{Seek, Write},
+    io::{Read, Seek, Write},
     path::Path,
     sync::Arc,
 };
 
-use azure_core::{credentials::TokenCredential, date::duration_from_minutes};
+use azure_core::{credentials::TokenCredential, date::duration_from_minutes, http::RequestContent};
 use azure_identity::{DefaultAzureCredentialBuilder, TokenCredentialOptions};
-use azure_storage_blob::{clients::BlobContainerClient, models::BlobClientDownloadResult, BlobClient};
+use azure_storage_blob::{BlobClient, clients::BlobContainerClient};
 use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 use managed_identity_credential::ManagedIdentityCredential;
-
-mod managed_identity_credential;
 
 const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
 
@@ -25,12 +24,10 @@ async fn sign_blob(
     let mut input = tempfile::tempfile()?;
     log::info!("Downloading blob {} ...", input_blob.blob_name());
     let response = input_blob.download(None).await?;
-    let stream: BlobClientDownloadResult = response.into_raw_body().into();
+    let mut stream = response.into_raw_body();
     while let Some(res) = stream.next().await {
-        let mut data = res?.data;
-        while let Some(chunk) = data.next().await {
-            input.write_all(&chunk?)?;
-        }
+        let data = res?;
+        input.write_all(&data)?;
     }
 
     input.rewind()?;
@@ -40,18 +37,16 @@ async fn sign_blob(
         .await?;
 
     output.rewind()?;
-    let output_file = tokio::fs::File::open(output.path()).await?;
-    const CAP: usize = 1024 * 1024;
-    let builder = FileStreamBuilder::new(output_file)
-        .buffer_size(CAP)
-        .build()
-        .await?;
+    let size = output.as_file().metadata()?.len();
+    let mut data = Vec::with_capacity(size as usize);
+    output.read_to_end(&mut data)?;
 
     log::info!(
         "Successfully signed blob {}. Uploading to output container...",
         output_blob.blob_name()
     );
-    output_blob.put_block_blob(builder).await?;
+    let content = RequestContent::from(data);
+    output_blob.upload(content, true, size, None).await?;
     log::info!("Successuflly uploaded blob {}", output_blob.blob_name());
     Ok(())
 }
@@ -62,10 +57,10 @@ async fn process_blob(
     signer: &mut TrustedSigner,
 ) -> anyhow::Result<()> {
     log::info!("Procesing blob {}", input_blob.blob_name());
-    let properties = input_blob.get_properties(None).await?;
+    let properties = input_blob.get_properties(None).await?.into();
 
-    let lease = input_blob.acquire_lease(duration_from_minutes(1)).await?;
-    let lease_client = input_blob.blob_lease_client(lease.lease_id);
+    let lease = input_blob.client.acquire_lease(duration_from_minutes(1)).await?;
+    let lease_client = input_blob.client.blob_lease_client(lease.lease_id);
     let result = sign_blob(
         &input_blob,
         &output_blob,
@@ -91,7 +86,7 @@ async fn process_blobs(
     let page = blobs.next().await;
     if let Some(page) = page {
         let page = page?;
-        for item  in page.into_body().await {
+        for item in page.into_body().await {
             for blob in item.segment.blob_items.iter() {
                 let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
                 let input_blob = input_container.blob_client(name.clone());
@@ -115,10 +110,6 @@ async fn main() -> Result<(), anyhow::Error> {
         let builder = DefaultAzureCredentialBuilder::new();
         builder.build()?
     } else {
-        let mut builder = DefaultAzureCredentialBuilder::new();
-        builder
-            .exclude_azure_cli_credential()
-            .exclude_azure_developer_cli_credential();
         let options = TokenCredentialOptions::default();
         Arc::new(ManagedIdentityCredential::create_with_user_assigned(
             options,
