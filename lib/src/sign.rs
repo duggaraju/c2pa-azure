@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use azure_core::{credentials::TokenCredential, error::ErrorKind, http::Url};
 use c2pa::{AsyncSigner, Builder, SigningAlg};
 use envconfig::Envconfig;
-use serde_json::json;
 use std::{
     io::{Read, Seek, Write},
     sync::Arc,
@@ -55,14 +54,15 @@ impl TrustedSigner {
     ) -> azure_core::Result<Self> {
         let anchors = include_str!("trust_anchors.pem").to_owned();
         let store = include_str!("store.cfg");
-        let settings = json!({
-            "trust": {
-                "trust_anchors": anchors,
-                "trust_config": store,
-            },
-        });
-        c2pa::settings::load_settings_from_str(&settings.to_string(), "json")
-            .map_err(|x| azure_core::Error::new(ErrorKind::Other, x))?;
+        let settings = format!(
+            r#"
+            [trust]
+            trust_anchors = """{anchors}"""
+            trust_config = """{store}"""
+            "#
+        );
+        c2pa::settings::Settings::from_toml(&settings)
+            .map_err(|x| azure_core::Error::new(ErrorKind::Other, format!("{x}")))?;
 
         let client_options =
             TrustedSigningClientOptions::new(&options.account, &options.certificate_profile);
@@ -131,7 +131,7 @@ impl AsyncSigner for TrustedSigner {
             .client
             .sign(&digest)
             .await
-            .inspect_err(|x| log::error!("Error signing data: {:?}", x))
+            .inspect_err(|x| log::error!("Error signing data: {x:?}"))
             .map_err(|_| c2pa::Error::CoseSignature)?;
         Ok(result)
     }

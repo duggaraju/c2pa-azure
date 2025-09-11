@@ -36,7 +36,7 @@ async fn copy_to_file(
                 }
             }
             Err(e) => {
-                log::error!("Error copying the body to file: {:?}", e);
+                log::error!("Error copying the body to file: {e:?}");
                 return Err(ApiError::Warp(e));
             }
         }

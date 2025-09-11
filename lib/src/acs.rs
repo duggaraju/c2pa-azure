@@ -6,9 +6,10 @@ use azure_core::{
     error::ErrorKind,
     http::{
         ClientOptions, Context, ExponentialRetryOptions, Method, Pipeline, Request, Response,
-        RetryOptions, TelemetryOptions, Url,
+        RetryOptions, Url, UserAgentOptions,
     },
     sleep::sleep,
+    time::Duration,
 };
 use bytes::Bytes;
 use c2pa::SigningAlg;
@@ -29,7 +30,7 @@ pub struct TrustedSigningClientOptions {
 
 impl TrustedSigningClientOptions {
     pub fn new(account: &str, certificate_profile: &str) -> Self {
-        let _ = TelemetryOptions {
+        let user_agent = UserAgentOptions {
             application_id: Some(format!("c2pa-azure/{}", env!("CARGO_PKG_VERSION"))),
         };
         Self {
@@ -40,9 +41,10 @@ impl TrustedSigningClientOptions {
             client_options: ClientOptions {
                 retry: Some(RetryOptions::exponential(ExponentialRetryOptions {
                     max_retries: 5,
-                    max_delay: std::time::Duration::from_secs(10),
+                    max_delay: Duration::seconds(10),
                     ..Default::default()
                 })),
+                user_agent: Some(user_agent),
                 ..Default::default()
             },
         }
@@ -164,7 +166,7 @@ impl TrustedSigningClient {
                     format!("Signing request failed with status: {:?}", status.status),
                 ));
             }
-            sleep(std::time::Duration::from_millis(250)).await;
+            sleep(Duration::milliseconds(250)).await;
             let url = self.endpoint.join(&format!(
                 "/codesigningaccounts/{}/certificateprofiles/{}/sign/{}?api-version={}",
                 self.options.account,

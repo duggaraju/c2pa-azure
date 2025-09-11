@@ -1,4 +1,3 @@
-mod managed_identity_credential;
 use std::{
     env, fs,
     io::{Read, Seek, Write},
@@ -6,12 +5,19 @@ use std::{
     sync::Arc,
 };
 
-use azure_core::{credentials::TokenCredential, date::duration_from_minutes, http::RequestContent};
-use azure_identity::{DefaultAzureCredentialBuilder, TokenCredentialOptions};
-use azure_storage_blob::{BlobClient, clients::BlobContainerClient};
+use azure_core::{
+    credentials::TokenCredential,
+    http::{RequestContent, headers::HeaderName},
+};
+use azure_identity::{
+    DefaultAzureCredentialBuilder, ManagedIdentityCredential, ManagedIdentityCredentialOptions,
+    UserAssignedId,
+};
+use azure_storage_blob::{
+    BlobClient, clients::BlobContainerClient, models::BlobClientAcquireLeaseResultHeaders,
+};
 use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
-use managed_identity_credential::ManagedIdentityCredential;
 
 const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
 
@@ -57,19 +63,16 @@ async fn process_blob(
     signer: &mut TrustedSigner,
 ) -> anyhow::Result<()> {
     log::info!("Procesing blob {}", input_blob.blob_name());
-    let properties = input_blob.get_properties(None).await?.into();
+    let properties = input_blob.get_properties(None).await?;
+    let content_type = properties
+        .headers()
+        .get_str(&HeaderName::from_static("Content-Type"))?;
 
-    let lease = input_blob.client.acquire_lease(duration_from_minutes(1)).await?;
-    let lease_client = input_blob.client.blob_lease_client(lease.lease_id);
-    let result = sign_blob(
-        &input_blob,
-        &output_blob,
-        signer,
-        &properties.blob.properties.content_type,
-    )
-    .await;
+    let lease = input_blob.acquire_lease(60, None).await?;
+    let lease_id = lease.lease_id()?.unwrap();
+    let result = sign_blob(&input_blob, &output_blob, signer, content_type).await;
 
-    lease_client.release().await?;
+    input_blob.release_lease(lease_id, None).await?;
     if result.is_ok() {
         input_blob.delete(None).await?;
     }
@@ -83,20 +86,18 @@ async fn process_blobs(
     signer: &mut TrustedSigner,
 ) -> anyhow::Result<()> {
     let mut blobs = input_container.list_blobs(None)?;
-    let page = blobs.next().await;
-    if let Some(page) = page {
-        let page = page?;
-        for item in page.into_body().await {
-            for blob in item.segment.blob_items.iter() {
-                let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
-                let input_blob = input_container.blob_client(name.clone());
-                let output_blob = output_container.blob_client(name.clone());
-                let result = process_blob(input_blob, output_blob, signer).await;
-                if let Err(err) = result {
-                    log::error!("Error processing blob: {:?}", err);
-                } else {
-                    log::info!("Blob {} processed successfully", name);
-                }
+    while let Some(page_result) = blobs.next().await {
+        let page = page_result?;
+        let blobs = page.into_body().await?;
+        for blob in blobs.segment.blob_items.iter() {
+            let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
+            let input_blob = input_container.blob_client(name.clone());
+            let output_blob = output_container.blob_client(name.clone());
+            let result = process_blob(input_blob, output_blob, signer).await;
+            if let Err(err) = result {
+                log::error!("Error processing blob: {err:?}");
+            } else {
+                log::info!("Blob {name} processed successfully");
             }
         }
     }
@@ -110,10 +111,13 @@ async fn main() -> Result<(), anyhow::Error> {
         let builder = DefaultAzureCredentialBuilder::new();
         builder.build()?
     } else {
-        let options = TokenCredentialOptions::default();
-        Arc::new(ManagedIdentityCredential::create_with_user_assigned(
-            options,
-        ))
+        let options = ManagedIdentityCredentialOptions {
+            user_assigned_id: Some(UserAssignedId::ClientId(
+                env::var("AZURE_CLIENT_ID").expect("missing AZURE_CLIENT_ID"),
+            )),
+            ..Default::default()
+        };
+        ManagedIdentityCredential::new(Some(options))?
     };
 
     let manifest_definition = env::var("MANIFEST_DEFINITION").ok();

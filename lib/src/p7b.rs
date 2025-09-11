@@ -83,7 +83,7 @@ impl CertificateChain {
 
     pub fn get_pem_certificates(&self) -> c2pa::Result<Vec<Vec<u8>>> {
         let info = ContentInfo::from_der(&self.0)
-            .inspect_err(|x| log::error!("{:?}", x))
+            .inspect_err(|x| log::error!("{x:?}"))
             .map_err(|_| c2pa::Error::CoseInvalidCert)?;
         let data: SignedData = info
             .content

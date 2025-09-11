@@ -7,9 +7,9 @@ edition = "2024"
 anyhow = { version = "1.0.95", features = ["backtrace"] }
 async-lock = "3.4.0"
 async-trait = "0.1.85"
-azure_core = { version = "0.25.0" }
-azure_identity = "0.25.0"
-azure_storage_blob = "0.2.0"
+azure_core = { version = "0.27.0" }
+azure_identity = "0.27.0"
+azure_storage_blob = { version = "0.4.0" }
 c2pa-acs = { path = "../lib" }
 env_logger = "0.11.8"
 futures = "0.3.31"
