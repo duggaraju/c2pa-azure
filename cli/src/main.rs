@@ -35,17 +35,20 @@ struct Arguments {
     certificate_profile: String,
 }
 
+const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
+const DEFAULT_SETTINGS: &str = include_str!("settings.toml");
+
 impl Arguments {
     fn signing_options(&self) -> SigningOptions {
         SigningOptions::new(
             self.endpoint.clone(),
             self.account.clone(),
             self.certificate_profile.clone(),
+            Some("http://timestamp.digicert.com"),
+            Some(DEFAULT_SETTINGS.to_owned()),
         )
     }
 }
-
-const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -54,10 +57,12 @@ async fn main() -> Result<()> {
     let mut builder = DefaultAzureCredentialBuilder::new();
     if !cfg!(debug_assertions) {
         builder.exclude_azure_cli_credential();
+        builder.exclude_azure_developer_cli_credential();
     }
     let credentials = builder.build()?;
 
     let options = args.signing_options();
+
     let mut input = File::open(&args.input)?;
     let mut output = File::create(args.output)?;
     let format = args

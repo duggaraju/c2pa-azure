@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use azure_core::{credentials::TokenCredential, error::ErrorKind, http::Url};
 use c2pa::{AsyncSigner, Builder, SigningAlg};
 use envconfig::Envconfig;
+use sha2::{Digest, Sha384};
 use std::{
     io::{Read, Seek, Write},
     sync::Arc,
@@ -24,16 +25,24 @@ pub struct SigningOptions {
     time_authority_url: Option<Url>,
     #[envconfig(from = "ALGORITHM", default = "ps384")]
     algorithm: c2pa::SigningAlg,
+    settings: Option<String>,
 }
 
 impl SigningOptions {
-    pub fn new(endpoint: Url, account: String, certificate_profile: String) -> Self {
+    pub fn new(
+        endpoint: Url,
+        account: String,
+        certificate_profile: String,
+        time_authority_url: Option<&str>,
+        settings: Option<String>,
+    ) -> Self {
         Self {
             account,
             endpoint,
             certificate_profile,
-            time_authority_url: Some(Url::parse(TIME_AUTHORITY_URL).unwrap()),
+            time_authority_url: Url::parse(time_authority_url.unwrap_or(TIME_AUTHORITY_URL)).ok(),
             algorithm: DEFAULT_ALGORITHM,
+            settings,
         }
     }
 }
@@ -52,23 +61,17 @@ impl TrustedSigner {
         options: SigningOptions,
         manifest_definition: String,
     ) -> azure_core::Result<Self> {
-        let anchors = include_str!("trust_anchors.pem").to_owned();
-        let store = include_str!("store.cfg");
-        let settings = format!(
-            r#"
-            [trust]
-            trust_anchors = """{anchors}"""
-            trust_config = """{store}"""
-            "#
-        );
-        c2pa::settings::Settings::from_toml(&settings)
-            .map_err(|x| azure_core::Error::new(ErrorKind::Other, format!("{x}")))?;
-
         let client_options =
             TrustedSigningClientOptions::new(&options.account, &options.certificate_profile);
         let client =
             TrustedSigningClient::new(options.endpoint.clone(), credential, client_options);
         let certificates = client.get_certificates().await?;
+
+        if let Some(settings) = &options.settings {
+            log::debug!("Using custom settings");
+            c2pa::settings::Settings::from_toml(settings)
+                .map_err(|x| azure_core::Error::new(ErrorKind::Other, x))?;
+        }
 
         Ok(Self {
             options,
@@ -108,7 +111,10 @@ impl TrustedSigner {
 
     fn get_digest(&self, data: Vec<u8>) -> azure_core::Result<Vec<u8>> {
         if SigningAlg::Ps384 == self.options.algorithm {
-            Ok(chksum_hash_sha2_384::hash(&data).into_inner().to_vec())
+            let mut hasher = Sha384::new();
+            hasher.update(&data);
+            let result = hasher.finalize();
+            Ok(result.to_vec())
         } else {
             Err(azure_core::Error::new(
                 ErrorKind::Other,

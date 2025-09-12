@@ -13,6 +13,7 @@ serde_json = "1.0.140"
 chksum-hash-sha2-384 = "0.0.1"
 serde = { version = "1.0.219", features = ["derive"] }
 envconfig = "0.11.0"
+sha2 = "0.10.8"
 
 c2pa = { version = "0.63.0", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests", "rust_native_crypto"], default-features = false}
 
