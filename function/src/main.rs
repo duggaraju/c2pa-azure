@@ -1,5 +1,5 @@
 use azure_core::credentials::TokenCredential;
-use azure_identity::DefaultAzureCredentialBuilder;
+use azure_identity::{AzureCliCredential, ManagedIdentityCredential};
 use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 use std::fs::{self, File};
@@ -95,11 +95,11 @@ async fn main() -> Result<(), anyhow::Error> {
     for (key, value) in std::env::vars() {
         log::info!("{key}: {value}");
     }
-    let mut builder = DefaultAzureCredentialBuilder::new();
-    if !cfg!(debug_assertions) {
-        builder.exclude_azure_cli_credential();
-    }
-    let credentials: Arc<dyn TokenCredential> = builder.build()?;
+    let credentials: Arc<dyn TokenCredential> = if cfg!(debug_assertions) {
+        AzureCliCredential::new(None)?
+    } else {
+        ManagedIdentityCredential::new(None)?
+    };
     let manifest_definition = env::var("MANIFEST_DEFINITION").ok();
     let manifest_definition = if let Some(manifest) = manifest_definition {
         let path = Path::new(&manifest);

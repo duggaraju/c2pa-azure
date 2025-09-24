@@ -111,6 +111,7 @@ impl TrustedSigningClient {
                 client_options,
                 vec![Arc::new(AuthorizationPolicy::new(credential, scope))],
                 vec![],
+                None,
             ),
         }
     }

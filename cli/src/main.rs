@@ -1,11 +1,10 @@
 use anyhow::Result;
-use azure_core::http::Url;
-use azure_identity::DefaultAzureCredentialBuilder;
+use azure_core::{credentials::TokenCredential, http::Url};
+use azure_identity::{AzureCliCredential, ManagedIdentityCredential, ManagedIdentityCredentialOptions, UserAssignedId};
 use c2pa_acs::{SigningOptions, TrustedSigner};
 use clap::{Parser, arg, command};
 use std::{
-    fs::{self, File},
-    path::{Path, PathBuf},
+    env, fs::{self, File}, path::{Path, PathBuf}, sync::Arc
 };
 
 #[derive(Parser, Debug)]
@@ -54,12 +53,17 @@ impl Arguments {
 async fn main() -> Result<()> {
     env_logger::init();
     let args = Arguments::parse();
-    let mut builder = DefaultAzureCredentialBuilder::new();
-    if !cfg!(debug_assertions) {
-        builder.exclude_azure_cli_credential();
-        builder.exclude_azure_developer_cli_credential();
-    }
-    let credentials = builder.build()?;
+    let credentials: Arc<dyn TokenCredential> = if cfg!(debug_assertions) {
+        AzureCliCredential::new(None)?
+    } else {
+        let options = ManagedIdentityCredentialOptions {
+            user_assigned_id: Some(UserAssignedId::ClientId(
+                env::var("AZURE_CLIENT_ID").expect("missing AZURE_CLIENT_ID"),
+            )),
+            ..Default::default()
+        };
+        ManagedIdentityCredential::new(Some(options))?
+    };
 
     let options = args.signing_options();
 

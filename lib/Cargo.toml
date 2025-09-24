@@ -4,18 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-azure_core = { version  = "0.27.0" }
-async-trait = "0.1.88"
+azure_core = { version  = "0.28.0" }
+async-trait = "0.1.89"
 cms = "0.2.3"
 bytes = "1.10.1"
-log = "0.4.27"
-serde_json = "1.0.140"
+log = "0.4.28"
+serde_json = "1.0.145"
 chksum-hash-sha2-384 = "0.0.1"
-serde = { version = "1.0.219", features = ["derive"] }
+serde = { version = "1.0.226", features = ["derive"] }
 envconfig = "0.11.0"
-sha2 = "0.10.8"
+sha2 = "0.10.9"
 
-c2pa = { version = "0.63.0", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests", "rust_native_crypto"], default-features = false}
+c2pa = { version = "0.65.1", features = ["pdf", "add_thumbnails", "file_io", "fetch_remote_manifests", "rust_native_crypto"], default-features = false }
 
 [dev-dependencies]
 tokio = { version = "1.45.1", features= ["rt", "rt-multi-thread", "macros"] }

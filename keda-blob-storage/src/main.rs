@@ -10,7 +10,7 @@ use azure_core::{
     http::{RequestContent, headers::HeaderName},
 };
 use azure_identity::{
-    DefaultAzureCredentialBuilder, ManagedIdentityCredential, ManagedIdentityCredentialOptions,
+    AzureCliCredential, ManagedIdentityCredential, ManagedIdentityCredentialOptions,
     UserAssignedId,
 };
 use azure_storage_blob::{
@@ -108,8 +108,7 @@ async fn process_blobs(
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
     let credential: Arc<dyn TokenCredential> = if cfg!(debug_assertions) {
-        let builder = DefaultAzureCredentialBuilder::new();
-        builder.build()?
+        AzureCliCredential::new(None)?
     } else {
         let options = ManagedIdentityCredentialOptions {
             user_assigned_id: Some(UserAssignedId::ClientId(

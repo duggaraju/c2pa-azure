@@ -5,11 +5,11 @@ edition = "2024"
 
 [dependencies]
 anyhow = { version = "1.0.98", features = ["backtrace"] }
-azure_identity = "0.27.0"
+azure_identity = "0.28.0"
 c2pa-acs = { path = "../lib" }
 clap_derive = "4.5.32"
 clap= { version = "4.5.39", features = ["derive"] }
 env_logger = "0.11.8"
-tokio = { version = "1.45.1", features= ["rt", "rt-multi-thread", "macros"] }
-azure_core = "0.27.0"
-log = "0.4.27"
+tokio = { version = "1.47.1", features= ["rt", "rt-multi-thread", "macros"] }
+azure_core = "0.28.0"
+log = "0.4.28"
