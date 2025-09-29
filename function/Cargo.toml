@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = { version = "1.0.98", features = ["backtrace"] }
-azure_core = "0.28.0"
-azure_identity = "0.28.0"
 c2pa-acs = { path = "../lib" }
-env_logger = "0.11.8"
 futures = "0.3.31"
-log = "0.4.28"
 tempfile = "3.15.0"
-tokio = { version = "1.47.1", features= ["rt", "rt-multi-thread", "macros"] }
 warp = { version = "0.4.2", features = ["server"  ] }
+anyhow = { workspace = true }
+azure_core = { workspace = true }
+azure_identity = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
+tokio = { workspace = true }
