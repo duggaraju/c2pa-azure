@@ -1,10 +1,15 @@
 use anyhow::Result;
 use azure_core::{credentials::TokenCredential, http::Url};
-use azure_identity::{AzureCliCredential, ManagedIdentityCredential, ManagedIdentityCredentialOptions, UserAssignedId};
-use c2pa_acs::{SigningOptions, TrustedSigner};
+use azure_identity::{
+    AzureCliCredential, ManagedIdentityCredential, ManagedIdentityCredentialOptions, UserAssignedId,
+};
+use c2pa_azure::{SigningOptions, TrustedSigner};
 use clap::{Parser, arg, command};
 use std::{
-    env, fs::{self, File}, path::{Path, PathBuf}, sync::Arc
+    env,
+    fs::{self, File},
+    path::{Path, PathBuf},
+    sync::Arc,
 };
 
 #[derive(Parser, Debug)]
@@ -34,7 +39,7 @@ struct Arguments {
     certificate_profile: String,
 }
 
-const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
+const DEFAULT_MANIFEST: &str = include_str!("../../../test_data/manifest_definition.json");
 const DEFAULT_SETTINGS: &str = include_str!("settings.toml");
 
 impl Arguments {

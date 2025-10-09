@@ -10,16 +10,15 @@ use azure_core::{
     http::{RequestContent, headers::HeaderName},
 };
 use azure_identity::{
-    AzureCliCredential, ManagedIdentityCredential, ManagedIdentityCredentialOptions,
-    UserAssignedId,
+    AzureCliCredential, ManagedIdentityCredential, ManagedIdentityCredentialOptions, UserAssignedId,
 };
 use azure_storage_blob::{
     BlobClient, clients::BlobContainerClient, models::BlobClientAcquireLeaseResultHeaders,
 };
-use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
+use c2pa_azure::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 
-const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
+const DEFAULT_MANIFEST: &str = include_str!("../../../test_data/manifest_definition.json");
 
 async fn sign_blob(
     input_blob: &BlobClient,

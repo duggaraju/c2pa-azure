@@ -1,9 +1,15 @@
 /// Azure Code Signing.
 /// This module provides the functionality to sign a file using Azure Code Signing.
 use azure_core::{
-    base64, credentials::TokenCredential, error::ErrorKind, http::{
-        ClientOptions, Context, ExponentialRetryOptions, Method, Pipeline, RawResponse, Request, Response, RetryOptions, Url, UserAgentOptions
-    }, sleep::sleep, time::Duration, Result
+    Result, base64,
+    credentials::TokenCredential,
+    error::ErrorKind,
+    http::{
+        ClientOptions, Context, ExponentialRetryOptions, Method, Pipeline, RawResponse, Request,
+        Response, RetryOptions, Url, UserAgentOptions,
+    },
+    sleep::sleep,
+    time::Duration,
 };
 use bytes::Bytes;
 use c2pa::SigningAlg;
@@ -38,7 +44,7 @@ impl TrustedSigningClientOptions {
                     max_delay: Duration::seconds(10),
                     ..Default::default()
                 }),
-                user_agent: user_agent,
+                user_agent,
                 ..Default::default()
             },
         }
@@ -118,7 +124,10 @@ impl TrustedSigningClient {
         let context = Context::new();
         let mut request = Request::new(url, Method::Get);
         request.insert_header("accept", "application/pkcs7-mime");
-        let response: RawResponse = self.pipeline.send(&context, &mut request, None).await?.into();
+        let response: RawResponse = self
+            .pipeline
+            .send(&context, &mut request, None)
+            .await?;
         let body = response.into_body();
         let bytes = Bytes::from(body);
         let cert = CertificateChain::from_cert_chain(bytes);
@@ -140,8 +149,11 @@ impl TrustedSigningClient {
         request.set_json(&data)?;
 
         for _ in 0..5 {
-            let response: Response<SigningStatus> =
-                self.pipeline.send(&context, &mut request, None).await?.into();
+            let response: Response<SigningStatus> = self
+                .pipeline
+                .send(&context, &mut request, None)
+                .await?
+                .into();
             let status: SigningStatus = response.into_body()?;
             log::info!(
                 "Signing operation: {}, status: {:?}",

@@ -1,6 +1,6 @@
 use azure_core::credentials::TokenCredential;
 use azure_identity::{AzureCliCredential, ManagedIdentityCredential};
-use c2pa_acs::{Envconfig, SigningOptions, TrustedSigner};
+use c2pa_azure::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 use std::fs::{self, File};
 use std::io::{Cursor, Write};
@@ -16,7 +16,7 @@ use warp::{Buf, Error, Filter, Rejection, Reply, Stream, reject::Reject};
 enum ApiError {
     Azure(azure_core::Error),
     Io(std::io::Error),
-    C2pa(c2pa_acs::Error),
+    C2pa(c2pa_azure::Error),
     Warp(Error),
 }
 
@@ -77,7 +77,7 @@ async fn verify_file(
         .await
         .map_err(warp::reject::custom)?;
 
-    let manifest = c2pa_acs::verify_file(&content_type, file)
+    let manifest = c2pa_azure::verify_file(&content_type, file)
         .await
         .map_err(|x| warp::reject::custom(ApiError::C2pa(x)))?;
     Ok(warp::reply::with_header(
@@ -87,7 +87,7 @@ async fn verify_file(
     ))
 }
 
-const DEFAULT_MANIFEST: &str = include_str!("../../manifest.json");
+const DEFAULT_MANIFEST: &str = include_str!("../../../test_data/manifest_definition.json");
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {

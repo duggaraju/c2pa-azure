@@ -1,7 +1,14 @@
 [package]
-name = "c2pa-acs"
+name = "c2pa-azure"
 version = "0.1.0"
 edition = "2024"
+description = "Rust helpers for issuing C2PA signatures via Azure Trusted Signing."
+repository = "https://github.com/duggaraju/c2pa-azure"
+homepage = "https://github.com/duggaraju/c2pa-azure"
+documentation = "https://github.com/duggaraju/c2pa-azure#readme"
+keywords = ["c2pa", "azure", "trusted-signing", "content-authenticity", "content-integrity"]
+license-file = "../LICENSE"
+readme = "../README.md"
 
 [dependencies]
 async-trait = "0.1.89"
