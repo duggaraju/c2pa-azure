@@ -1,15 +1,9 @@
 /// Azure Code Signing.
 /// This module provides the functionality to sign a file using Azure Code Signing.
 use azure_core::{
-    Result, base64,
-    credentials::TokenCredential,
-    error::ErrorKind,
-    http::{
-        ClientOptions, Context, ExponentialRetryOptions, Method, Pipeline, Request, Response,
-        RetryOptions, Url, UserAgentOptions,
-    },
-    sleep::sleep,
-    time::Duration,
+    base64, credentials::TokenCredential, error::ErrorKind, http::{
+        ClientOptions, Context, ExponentialRetryOptions, Method, Pipeline, RawResponse, Request, Response, RetryOptions, Url, UserAgentOptions
+    }, sleep::sleep, time::Duration, Result
 };
 use bytes::Bytes;
 use c2pa::SigningAlg;
@@ -39,12 +33,12 @@ impl TrustedSigningClientOptions {
             certificate_profile: certificate_profile.to_owned(),
             scope: DEFAULT_SCOPE.to_owned(),
             client_options: ClientOptions {
-                retry: Some(RetryOptions::exponential(ExponentialRetryOptions {
+                retry: RetryOptions::exponential(ExponentialRetryOptions {
                     max_retries: 5,
                     max_delay: Duration::seconds(10),
                     ..Default::default()
-                })),
-                user_agent: Some(user_agent),
+                }),
+                user_agent: user_agent,
                 ..Default::default()
             },
         }
@@ -124,9 +118,9 @@ impl TrustedSigningClient {
         let context = Context::new();
         let mut request = Request::new(url, Method::Get);
         request.insert_header("accept", "application/pkcs7-mime");
-        let response: Response<Bytes> = self.pipeline.send(&context, &mut request).await?.into();
-        let body = response.into_raw_body();
-        let bytes = body.collect().await?;
+        let response: RawResponse = self.pipeline.send(&context, &mut request, None).await?.into();
+        let body = response.into_body();
+        let bytes = Bytes::from(body);
         let cert = CertificateChain::from_cert_chain(bytes);
         let pem = cert
             .get_pem_certificates()
@@ -147,8 +141,8 @@ impl TrustedSigningClient {
 
         for _ in 0..5 {
             let response: Response<SigningStatus> =
-                self.pipeline.send(&context, &mut request).await?.into();
-            let status: SigningStatus = response.into_body().await?;
+                self.pipeline.send(&context, &mut request, None).await?.into();
+            let status: SigningStatus = response.into_body()?;
             log::info!(
                 "Signing operation: {}, status: {:?}",
                 status.operation_id,

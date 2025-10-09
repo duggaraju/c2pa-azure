@@ -30,7 +30,7 @@ async fn sign_blob(
     let mut input = tempfile::tempfile()?;
     log::info!("Downloading blob {} ...", input_blob.blob_name());
     let response = input_blob.download(None).await?;
-    let mut stream = response.into_raw_body();
+    let mut stream = response.into_body();
     while let Some(res) = stream.next().await {
         let data = res?;
         input.write_all(&data)?;
@@ -88,7 +88,7 @@ async fn process_blobs(
     let mut blobs = input_container.list_blobs(None)?;
     while let Some(page_result) = blobs.next().await {
         let page = page_result?;
-        let blobs = page.into_body().await?;
+        let blobs = page.into_body()?;
         for blob in blobs.segment.blob_items.iter() {
             let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
             let input_blob = input_container.blob_client(name.clone());
