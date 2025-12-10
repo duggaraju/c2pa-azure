@@ -27,7 +27,7 @@ async fn sign_blob(
     content_type: &str,
 ) -> anyhow::Result<()> {
     let mut input = tempfile::tempfile()?;
-    log::info!("Downloading blob {} ...", input_blob.blob_name());
+    log::info!("Downloading blob {} ...", input_blob.url());
     let response = input_blob.download(None).await?;
     let mut stream = response.into_body();
     while let Some(res) = stream.next().await {
@@ -48,11 +48,11 @@ async fn sign_blob(
 
     log::info!(
         "Successfully signed blob {}. Uploading to output container...",
-        output_blob.blob_name()
+        output_blob.url()
     );
     let content = RequestContent::from(data);
     output_blob.upload(content, true, size, None).await?;
-    log::info!("Successuflly uploaded blob {}", output_blob.blob_name());
+    log::info!("Successuflly uploaded blob {}", output_blob.url());
     Ok(())
 }
 
@@ -61,7 +61,7 @@ async fn process_blob(
     output_blob: BlobClient,
     signer: &mut TrustedSigner,
 ) -> anyhow::Result<()> {
-    log::info!("Procesing blob {}", input_blob.blob_name());
+    log::info!("Procesing blob {}", input_blob.url());
     let properties = input_blob.get_properties(None).await?;
     let content_type = properties
         .headers()
@@ -85,19 +85,16 @@ async fn process_blobs(
     signer: &mut TrustedSigner,
 ) -> anyhow::Result<()> {
     let mut blobs = input_container.list_blobs(None)?;
-    while let Some(page_result) = blobs.next().await {
-        let page = page_result?;
-        let blobs = page.into_body()?;
-        for blob in blobs.segment.blob_items.iter() {
-            let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
-            let input_blob = input_container.blob_client(name.clone());
-            let output_blob = output_container.blob_client(name.clone());
-            let result = process_blob(input_blob, output_blob, signer).await;
-            if let Err(err) = result {
-                log::error!("Error processing blob: {err:?}");
-            } else {
-                log::info!("Blob {name} processed successfully");
-            }
+    while let Some(result) = blobs.next().await {
+        let blob = result?;
+        let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
+        let input_blob = input_container.blob_client(name);
+        let output_blob = output_container.blob_client(name);
+        let result = process_blob(input_blob, output_blob, signer).await;
+        if let Err(err) = result {
+            log::error!("Error processing blob: {err:?}");
+        } else {
+            log::info!("Blob {name} processed successfully");
         }
     }
     Ok(())
@@ -134,10 +131,18 @@ async fn main() -> Result<(), anyhow::Error> {
     let input_container_name = std::env::var("INPUT_CONTAINER").expect("missing INPUT_CONTAINER");
     let output_container_name =
         std::env::var("OUTPUT_CONTAINER").expect("missing OUTPUT_CONTAINER");
-    let input_container =
-        BlobContainerClient::new(&account, input_container_name, credential.clone(), None)?;
-    let output_container =
-        BlobContainerClient::new(&account, output_container_name, credential.clone(), None)?;
+    let input_container = BlobContainerClient::new(
+        &account,
+        &input_container_name,
+        Some(credential.clone()),
+        None,
+    )?;
+    let output_container = BlobContainerClient::new(
+        &account,
+        &output_container_name,
+        Some(credential.clone()),
+        None,
+    )?;
     let options = SigningOptions::init_from_env()?;
     let mut signer = TrustedSigner::new(credential, options, manifest_definition).await?;
     process_blobs(input_container, output_container, &mut signer).await?;

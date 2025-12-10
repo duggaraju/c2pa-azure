@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 async-lock = "3.4.0"
 async-trait = "0.1.85"
-azure_storage_blob = { version = "0.6.0" }
+azure_storage_blob = { version = "0.7.0" }
 c2pa-azure = { path = "../../lib" }
 futures = "0.3.31"
 serde = "1.0.219"
