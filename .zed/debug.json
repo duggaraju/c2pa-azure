@@ -1,0 +1,29 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "label": "AzureCLI",
+    "type": "rust",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "name": "Debug",
+    "program": "target/debug/cli",
+    "args": [
+      "-i",
+      "test_data/sample1.png",
+      "-o",
+      "output.png",
+      "-e",
+      "https://eus.codesigning.azure.net/",
+      "-c",
+      "rai-poc-provenance-sign",
+      "-a",
+      "rai-provenance-sign"
+    ],
+    "env": {
+      "RUST_BACKTRACE": "1"
+    }
+  }
+]
