@@ -14,3 +14,4 @@ azure_identity = { workspace = true }
 env_logger = { workspace = true }
 log = { workspace = true }
 tokio = { workspace = true }
+c2pa = { workspace = true}

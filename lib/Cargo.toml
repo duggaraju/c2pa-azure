@@ -25,14 +25,7 @@ chksum-hash-sha2-384 = "0.0.1"
 serde = { version = "1.0.228", features = ["derive"] }
 envconfig = "0.11.1"
 sha2 = "0.10.9"
-c2pa = { version = "0.75.4", features = [
-    "pdf",
-    "add_thumbnails",
-    "file_io",
-    "fetch_remote_manifests",
-    "rust_native_crypto",
-    "default_http",
-], default-features = false }
+c2pa = { workspace = true}
 azure_core = { workspace = true }
 log = { workspace = true }
 

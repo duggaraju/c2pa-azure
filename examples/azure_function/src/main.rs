@@ -1,5 +1,6 @@
 use azure_core::credentials::TokenCredential;
 use azure_identity::{AzureCliCredential, ManagedIdentityCredential};
+use c2pa::{Builder, Context, Reader};
 use c2pa_azure::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 use std::fs::{self, File};
@@ -46,7 +47,7 @@ async fn copy_to_file(
 }
 
 async fn sign_file(
-    mut signer: TrustedSigner,
+    context: Arc<Context>,
     content_type: String,
     stream: impl Stream<Item = Result<impl Buf, warp::Error>> + Unpin + Send + Sync,
 ) -> Result<impl Reply, Rejection> {
@@ -56,10 +57,14 @@ async fn sign_file(
         .map_err(warp::reject::custom)?;
 
     let mut output = Cursor::new(Vec::new());
-    signer
-        .sign(&mut file.as_file_mut(), &mut output, &content_type)
+    let mut builder = Builder::from_shared_context(&context);
+    let signer = context
+        .async_signer()
+        .map_err(|x| warp::reject::custom(ApiError::C2pa(x)))?;
+    builder
+        .sign_async(signer, &content_type, &mut file.as_file_mut(), &mut output)
         .await
-        .map_err(|x| warp::reject::custom(ApiError::Azure(x)))?;
+        .map_err(|x| warp::reject::custom(ApiError::C2pa(x)))?;
     log::info!("Successfully signed the file.");
     Ok(warp::reply::with_header(
         output.into_inner(),
@@ -77,9 +82,10 @@ async fn verify_file(
         .await
         .map_err(warp::reject::custom)?;
 
-    let manifest = c2pa_azure::verify_file(&content_type, file)
+    let reader = Reader::from_stream_async(&content_type, file.as_file_mut())
         .await
         .map_err(|x| warp::reject::custom(ApiError::C2pa(x)))?;
+    let manifest = reader.json();
     Ok(warp::reply::with_header(
         manifest,
         "content-type",
@@ -121,10 +127,11 @@ async fn main() -> Result<(), anyhow::Error> {
         .and_then(verify_file);
 
     let options = SigningOptions::init_from_env()?;
-    let signer = TrustedSigner::new(credentials, options, manifest_definition).await?;
+    let signer = TrustedSigner::new(credentials, options).await?;
+    let context = Context::new().with_async_signer(signer).into_shared();
     let sign = warp::path("sign")
         .and(warp::path::end())
-        .map(move || signer.clone())
+        .map(move || context.clone())
         .and(content_type)
         .and(warp::filters::body::stream())
         .and_then(sign_file);

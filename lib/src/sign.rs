@@ -1,12 +1,9 @@
 use async_trait::async_trait;
 use azure_core::{credentials::TokenCredential, error::ErrorKind, http::Url};
-use c2pa::{AsyncSigner, Builder, SigningAlg};
+use c2pa::{AsyncSigner, SigningAlg};
 use envconfig::Envconfig;
 use sha2::{Digest, Sha384};
-use std::{
-    io::{Read, Seek, Write},
-    sync::Arc,
-};
+use std::sync::Arc;
 
 use crate::acs::{TrustedSigningClient, TrustedSigningClientOptions};
 
@@ -25,7 +22,6 @@ pub struct SigningOptions {
     time_authority_url: Option<Url>,
     #[envconfig(from = "ALGORITHM", default = "ps384")]
     algorithm: c2pa::SigningAlg,
-    settings: Option<String>,
 }
 
 impl SigningOptions {
@@ -34,7 +30,6 @@ impl SigningOptions {
         account: String,
         certificate_profile: String,
         time_authority_url: Option<&str>,
-        settings: Option<String>,
     ) -> Self {
         Self {
             account,
@@ -42,7 +37,6 @@ impl SigningOptions {
             certificate_profile,
             time_authority_url: Url::parse(time_authority_url.unwrap_or(TIME_AUTHORITY_URL)).ok(),
             algorithm: DEFAULT_ALGORITHM,
-            settings,
         }
     }
 }
@@ -51,7 +45,6 @@ impl SigningOptions {
 pub struct TrustedSigner {
     options: SigningOptions,
     client: TrustedSigningClient,
-    manifest_definition: String,
     certificates: Vec<Vec<u8>>,
 }
 
@@ -59,7 +52,6 @@ impl TrustedSigner {
     pub async fn new(
         credential: Arc<dyn TokenCredential>,
         options: SigningOptions,
-        manifest_definition: String,
     ) -> azure_core::Result<Self> {
         let client_options =
             TrustedSigningClientOptions::new(&options.account, &options.certificate_profile);
@@ -67,46 +59,11 @@ impl TrustedSigner {
             TrustedSigningClient::new(options.endpoint.clone(), credential, client_options);
         let certificates = client.get_certificates().await?;
 
-        if let Some(settings) = &options.settings {
-            log::debug!("Using custom settings");
-            c2pa::settings::Settings::from_toml(settings)
-                .map_err(|x| azure_core::Error::new(ErrorKind::Other, x))?;
-        }
-
         Ok(Self {
             options,
             client,
-            manifest_definition,
             certificates,
         })
-    }
-
-    pub async fn sign<T, U>(
-        &mut self,
-        mut input: T,
-        mut output: U,
-        format: &str,
-    ) -> Result<(), azure_core::Error>
-    where
-        T: Read + Seek + Send,
-        U: Read + Write + Seek + Send,
-    {
-        let mut builder = Builder::from_json(&self.manifest_definition)
-            .map_err(|x| azure_core::Error::new(ErrorKind::Other, x))?;
-
-        let ingredient = r##"{
-        "title": "Original File",
-        "relationship": "parentOf"
-        }"##;
-        builder
-            .add_ingredient_from_stream(ingredient, format, &mut input)
-            .map_err(|x| azure_core::Error::new(ErrorKind::Other, x))?;
-        input.rewind()?;
-        builder
-            .sign_async(self, format, &mut input, &mut output)
-            .await
-            .map_err(|x| azure_core::Error::new(ErrorKind::Other, x))?;
-        Ok(())
     }
 
     fn get_digest(&self, data: Vec<u8>) -> azure_core::Result<Vec<u8>> {

@@ -3,12 +3,13 @@ use azure_core::{credentials::TokenCredential, http::Url};
 use azure_identity::{
     AzureCliCredential, ManagedIdentityCredential, ManagedIdentityCredentialOptions, UserAssignedId,
 };
+use c2pa::{Builder, Context};
 use c2pa_azure::{SigningOptions, TrustedSigner};
 use clap::{Parser, arg, command};
 use std::{
     env,
     fs::{self, File},
-    path::{Path, PathBuf},
+    path::PathBuf,
     sync::Arc,
 };
 
@@ -27,7 +28,10 @@ struct Arguments {
     output: PathBuf,
 
     #[arg(short, long)]
-    manifest_definition: Option<String>,
+    manifest_definition: Option<PathBuf>,
+
+    #[arg(short = 's', long, value_name = "PATH")]
+    settings: Option<PathBuf>,
 
     #[arg(short, long)]
     account: String,
@@ -49,7 +53,6 @@ impl Arguments {
             self.account.clone(),
             self.certificate_profile.clone(),
             Some("http://timestamp.digicert.com"),
-            Some(DEFAULT_SETTINGS.to_owned()),
         )
     }
 }
@@ -79,19 +82,26 @@ async fn main() -> Result<()> {
         .extension()
         .map(|x| x.to_str().unwrap())
         .unwrap_or("application/octet-stream");
-    let manifest_definition = if let Some(manifest) = args.manifest_definition {
-        let path = Path::new(&manifest);
-        if path.exists() {
-            fs::read_to_string(path)?
-        } else {
-            manifest
-        }
+
+    let settings = if let Some(path) = args.settings.as_ref() {
+        fs::read_to_string(path)?
+    } else {
+        DEFAULT_SETTINGS.to_owned()
+    };
+    let context = Context::new().with_settings(settings)?;
+
+    let manifest_definition = if let Some(path) = args.manifest_definition {
+        fs::read_to_string(path)?
     } else {
         DEFAULT_MANIFEST.to_owned()
     };
 
-    let mut signer = TrustedSigner::new(credentials, options, manifest_definition).await?;
-    signer.sign(&mut input, &mut output, format).await?;
+    let mut builder = Builder::from_context(context).with_definition(&manifest_definition)?;
+    let signer = TrustedSigner::new(credentials, options).await?;
+
+    builder
+        .sign_async(&signer, format, &mut input, &mut output)
+        .await?;
     log::info!("Successfully signed the file.");
     Ok(())
 }

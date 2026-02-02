@@ -15,6 +15,7 @@ use azure_identity::{
 use azure_storage_blob::{
     BlobClient, clients::BlobContainerClient, models::BlobClientAcquireLeaseResultHeaders,
 };
+use c2pa::{AsyncSigner, Builder, Context, ManifestDefinition};
 use c2pa_azure::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 
@@ -23,7 +24,8 @@ const DEFAULT_MANIFEST: &str = include_str!("../../../test_data/manifest_definit
 async fn sign_blob(
     input_blob: &BlobClient,
     output_blob: &BlobClient,
-    signer: &mut TrustedSigner,
+    builder: &mut Builder,
+    signer: &dyn AsyncSigner,
     content_type: &str,
 ) -> anyhow::Result<()> {
     let mut input = tempfile::tempfile()?;
@@ -37,8 +39,8 @@ async fn sign_blob(
 
     input.rewind()?;
     let mut output = tempfile::NamedTempFile::new()?;
-    signer
-        .sign(input, output.as_file_mut(), content_type)
+    builder
+        .sign_async(signer, content_type, &mut input, output.as_file_mut())
         .await?;
 
     output.rewind()?;
@@ -59,7 +61,8 @@ async fn sign_blob(
 async fn process_blob(
     input_blob: BlobClient,
     output_blob: BlobClient,
-    signer: &mut TrustedSigner,
+    builder: &mut Builder,
+    signer: &dyn AsyncSigner,
 ) -> anyhow::Result<()> {
     log::info!("Procesing blob {}", input_blob.url());
     let properties = input_blob.get_properties(None).await?;
@@ -69,7 +72,7 @@ async fn process_blob(
 
     let lease = input_blob.acquire_lease(60, None).await?;
     let lease_id = lease.lease_id()?.unwrap();
-    let result = sign_blob(&input_blob, &output_blob, signer, content_type).await;
+    let result = sign_blob(&input_blob, &output_blob, builder, signer, content_type).await;
 
     input_blob.release_lease(lease_id, None).await?;
     if result.is_ok() {
@@ -82,7 +85,8 @@ async fn process_blob(
 async fn process_blobs(
     input_container: BlobContainerClient,
     output_container: BlobContainerClient,
-    signer: &mut TrustedSigner,
+    builder: &mut Builder,
+    signer: &dyn AsyncSigner,
 ) -> anyhow::Result<()> {
     let mut blobs = input_container.list_blobs(None)?;
     while let Some(result) = blobs.next().await {
@@ -90,7 +94,7 @@ async fn process_blobs(
         let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
         let input_blob = input_container.blob_client(name);
         let output_blob = output_container.blob_client(name);
-        let result = process_blob(input_blob, output_blob, signer).await;
+        let result = process_blob(input_blob, output_blob, builder, signer).await;
         if let Err(err) = result {
             log::error!("Error processing blob: {err:?}");
         } else {
@@ -126,7 +130,7 @@ async fn main() -> Result<(), anyhow::Error> {
     } else {
         DEFAULT_MANIFEST.to_owned()
     };
-
+    let manifest_definition = ManifestDefinition::try_from(manifest_definition)?;
     let account = std::env::var("STORAGE_ACCOUNT").expect("missing STORAGE_ACCOUNT");
     let input_container_name = std::env::var("INPUT_CONTAINER").expect("missing INPUT_CONTAINER");
     let output_container_name =
@@ -143,8 +147,11 @@ async fn main() -> Result<(), anyhow::Error> {
         Some(credential.clone()),
         None,
     )?;
+
     let options = SigningOptions::init_from_env()?;
-    let mut signer = TrustedSigner::new(credential, options, manifest_definition).await?;
-    process_blobs(input_container, output_container, &mut signer).await?;
+    let signer = TrustedSigner::new(credential, options).await?;
+    let context = Context::new();
+    let mut builder = Builder::from_context(context).with_definition(manifest_definition)?;
+    process_blobs(input_container, output_container, &mut builder, &signer).await?;
     Ok(())
 }
