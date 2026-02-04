@@ -1,6 +1,6 @@
 [package]
 name = "c2pa-azure"
-version = "0.73.2"
+version = "0.75.13"
 edition = "2024"
 description = "Rust helpers for issuing C2PA signatures via Azure Trusted Signing."
 repository = "https://github.com/duggaraju/c2pa-azure"
@@ -19,7 +19,7 @@ readme = "../README.md"
 [dependencies]
 async-trait = "0.1.89"
 cms = "0.2.3"
-bytes = "1.11.0"
+bytes = "1.11.1"
 serde_json = "1.0.148"
 chksum-hash-sha2-384 = "0.0.1"
 serde = { version = "1.0.228", features = ["derive"] }

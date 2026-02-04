@@ -21,11 +21,10 @@ tokio = { version = "1.49.0", features = [
     "macros",
     "io-util",
 ] }
-c2pa = { version = "0.75.10", features = [
+c2pa = { version = "0.75.13", features = [
     "pdf",
     "add_thumbnails",
     "file_io",
     "fetch_remote_manifests",
     "rust_native_crypto",
-    "default_http",
 ], default-features = false }

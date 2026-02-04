@@ -44,7 +44,7 @@ struct Arguments {
 }
 
 const DEFAULT_MANIFEST: &str = include_str!("../../../test_data/manifest_definition.json");
-const DEFAULT_SETTINGS: &str = include_str!("settings.toml");
+const DEFAULT_SETTINGS: &str = include_str!("../../../test_data/settings.toml");
 
 impl Arguments {
     fn signing_options(&self) -> SigningOptions {

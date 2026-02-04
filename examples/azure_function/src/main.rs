@@ -1,6 +1,6 @@
 use azure_core::credentials::TokenCredential;
 use azure_identity::{AzureCliCredential, ManagedIdentityCredential};
-use c2pa::{Builder, Context, Reader};
+use c2pa::{Builder, Context, ManifestDefinition, Reader};
 use c2pa_azure::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 use std::fs::{self, File};
@@ -48,6 +48,7 @@ async fn copy_to_file(
 
 async fn sign_file(
     context: Arc<Context>,
+    manifest_definition: Arc<String>,
     content_type: String,
     stream: impl Stream<Item = Result<impl Buf, warp::Error>> + Unpin + Send + Sync,
 ) -> Result<impl Reply, Rejection> {
@@ -57,7 +58,9 @@ async fn sign_file(
         .map_err(warp::reject::custom)?;
 
     let mut output = Cursor::new(Vec::new());
-    let mut builder = Builder::from_shared_context(&context);
+    let mut builder =
+        Builder::from_shared_context(&context).with_definition(&*manifest_definition)
+        .map_err(|x| warp::reject::custom(ApiError::C2pa(x)))?;
     let signer = context
         .async_signer()
         .map_err(|x| warp::reject::custom(ApiError::C2pa(x)))?;
@@ -107,7 +110,7 @@ async fn main() -> Result<(), anyhow::Error> {
         ManagedIdentityCredential::new(None)?
     };
     let manifest_definition = env::var("MANIFEST_DEFINITION").ok();
-    let manifest_definition = if let Some(manifest) = manifest_definition {
+    let manifest_definition = Arc::new(if let Some(manifest) = manifest_definition {
         let path = Path::new(&manifest);
         if path.exists() {
             fs::read_to_string(path)?
@@ -116,7 +119,7 @@ async fn main() -> Result<(), anyhow::Error> {
         }
     } else {
         DEFAULT_MANIFEST.to_owned()
-    };
+    });
 
     let content_type = warp::header::<String>("content-type");
 
@@ -131,7 +134,8 @@ async fn main() -> Result<(), anyhow::Error> {
     let context = Context::new().with_async_signer(signer).into_shared();
     let sign = warp::path("sign")
         .and(warp::path::end())
-        .map(move || context.clone())
+        .and(warp::any().map(move || context.clone()))
+        .and(warp::any().map(move || manifest_definition.clone()))
         .and(content_type)
         .and(warp::filters::body::stream())
         .and_then(sign_file);
