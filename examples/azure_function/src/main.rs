@@ -58,8 +58,8 @@ async fn sign_file(
         .map_err(warp::reject::custom)?;
 
     let mut output = Cursor::new(Vec::new());
-    let mut builder =
-        Builder::from_shared_context(&context).with_definition(&*manifest_definition)
+    let mut builder = Builder::from_shared_context(&context)
+        .with_definition(&*manifest_definition)
         .map_err(|x| warp::reject::custom(ApiError::C2pa(x)))?;
     let signer = context
         .async_signer()

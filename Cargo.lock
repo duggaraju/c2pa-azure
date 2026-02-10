@@ -117,9 +117,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.100"
+version = "1.0.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
+checksum = "5f0e0fee31ef5ed1ba1316088939cea399010ed7731dba877ed44aeb407a75ea"
 dependencies = [
  "backtrace",
 ]
@@ -483,9 +483,9 @@ checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
 name = "c2pa"
-version = "0.75.13"
+version = "0.75.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74d1988ee8c491b2dfd4020e4525d53ce793d2172d4f3d52ecf69bd3b817584a"
+checksum = "c55e4db069b4a7c5a2bf943ab3f819e1416c428a43f9143be7cc845218621e81"
 dependencies = [
  "asn1-rs",
  "async-generic",

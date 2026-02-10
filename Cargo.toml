@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.dependencies]
-anyhow = { version = "1.0.100", features = ["backtrace"] }
+anyhow = { version = "1.0.101", features = ["backtrace"] }
 azure_core = "0.31.0"
 azure_identity = "0.31.0"
 env_logger = "0.11.8"
@@ -21,7 +21,7 @@ tokio = { version = "1.49.0", features = [
     "macros",
     "io-util",
 ] }
-c2pa = { version = "0.75.13", features = [
+c2pa = { version = "0.75.19", features = [
     "pdf",
     "add_thumbnails",
     "file_io",
