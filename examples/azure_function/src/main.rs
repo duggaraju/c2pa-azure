@@ -1,6 +1,6 @@
 use azure_core::credentials::TokenCredential;
 use azure_identity::{AzureCliCredential, ManagedIdentityCredential};
-use c2pa::{Builder, Context, ManifestDefinition, Reader};
+use c2pa::{Builder, Context, Reader};
 use c2pa_azure::{Envconfig, SigningOptions, TrustedSigner};
 use futures::StreamExt;
 use std::fs::{self, File};
