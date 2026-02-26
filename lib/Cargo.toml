@@ -1,6 +1,6 @@
 [package]
 name = "c2pa-azure"
-version = "0.75.13"
+version = "0.76.0"
 edition = "2024"
 description = "Rust helpers for issuing C2PA signatures via Azure Trusted Signing."
 repository = "https://github.com/duggaraju/c2pa-azure"
