@@ -5,7 +5,7 @@ use azure_identity::{
 };
 use c2pa::{Builder, Context};
 use c2pa_azure::{SigningOptions, TrustedSigner};
-use clap::{Parser, arg, command};
+use clap::Parser;
 use std::{
     env,
     fs::{self, File},
