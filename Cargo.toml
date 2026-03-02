@@ -8,6 +8,9 @@ members = [
     "examples/keda-blob-storage",
 ]
 
+[workspace.package]
+version = "0.76.1"
+
 [workspace.dependencies]
 anyhow = { version = "1.0.102", features = ["backtrace"] }
 azure_core = "0.32.0"
@@ -21,7 +24,7 @@ tokio = { version = "1.49.0", features = [
     "macros",
     "io-util",
 ] }
-c2pa = { version = "0.76.0", features = [
+c2pa = { version = "0.76.1", features = [
     "pdf",
     "add_thumbnails",
     "file_io",
