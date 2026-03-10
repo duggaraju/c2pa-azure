@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.76.1"
+version = "0.77.0"
 
 [workspace.dependencies]
 anyhow = { version = "1.0.102", features = ["backtrace"] }
