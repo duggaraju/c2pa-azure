@@ -1,13 +1,17 @@
 use std::{
     env, fs,
-    io::{Read, Seek, Write},
+    io::{Seek, Write},
     path::Path,
+    pin::Pin,
     sync::Arc,
+    task::{Context as TaskContext, Poll},
 };
 
 use azure_core::{
     credentials::TokenCredential,
-    http::{RequestContent, headers::HeaderName},
+    error::ErrorKind,
+    http::{Body, RequestContent, headers::HeaderName},
+    stream::SeekableStream,
 };
 use azure_identity::{
     AzureCliCredential, ManagedIdentityCredential, ManagedIdentityCredentialOptions, UserAssignedId,
@@ -17,9 +21,72 @@ use azure_storage_blob::{
 };
 use c2pa::{AsyncSigner, Builder, Context, ManifestDefinition};
 use c2pa_azure::{Envconfig, SigningOptions, TrustedSigner};
-use futures::StreamExt;
+use futures::{StreamExt, io::AsyncRead};
+use tokio::{
+    fs::File,
+    io::{AsyncReadExt, AsyncSeekExt},
+    sync::Mutex,
+};
 
 const DEFAULT_MANIFEST: &str = include_str!("../../../test_data/manifest_definition.json");
+
+#[derive(Debug, Clone)]
+struct SeekableFileStream {
+    handle: Arc<Mutex<File>>,
+    len: usize,
+    buffer_size: usize,
+}
+
+impl SeekableFileStream {
+    async fn open(path: &Path) -> anyhow::Result<Self> {
+        let file = File::open(path).await?;
+        let len = file.metadata().await?.len() as usize;
+        Ok(Self {
+            handle: Arc::new(Mutex::new(file)),
+            len,
+            buffer_size: azure_core::stream::DEFAULT_BUFFER_SIZE,
+        })
+    }
+
+    async fn read(&self, slice: &mut [u8]) -> std::io::Result<usize> {
+        let mut handle = self.handle.lock().await;
+        handle.read(slice).await
+    }
+}
+
+#[async_trait::async_trait]
+impl SeekableStream for SeekableFileStream {
+    async fn reset(&mut self) -> azure_core::Result<()> {
+        let mut handle = self.handle.lock().await;
+        handle
+            .seek(std::io::SeekFrom::Start(0))
+            .await
+            .map_err(|err| {
+                azure_core::Error::with_error(ErrorKind::Io, err, "failed to reset file stream")
+            })?;
+        Ok(())
+    }
+
+    fn len(&self) -> usize {
+        self.len
+    }
+
+    fn buffer_size(&self) -> usize {
+        self.buffer_size
+    }
+}
+
+impl AsyncRead for SeekableFileStream {
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut TaskContext<'_>,
+        slice: &mut [u8],
+    ) -> Poll<std::io::Result<usize>> {
+        let this = self.get_mut();
+        let mut fut = std::pin::pin!(this.read(slice));
+        fut.as_mut().poll(cx)
+    }
+}
 
 async fn sign_blob(
     input_blob: &BlobClient,
@@ -43,17 +110,14 @@ async fn sign_blob(
         .sign_async(signer, content_type, &mut input, output.as_file_mut())
         .await?;
 
-    output.rewind()?;
-    let size = output.as_file().metadata()?.len();
-    let mut data = Vec::with_capacity(size as usize);
-    output.read_to_end(&mut data)?;
-
     log::info!(
         "Successfully signed blob {}. Uploading to output container...",
         output_blob.url()
     );
-    let content = RequestContent::from(data);
-    output_blob.upload(content, true, size, None).await?;
+    let stream = SeekableFileStream::open(output.path()).await?;
+    let content: RequestContent<azure_core::Bytes, azure_core::http::NoFormat> =
+        Body::SeekableStream(Box::new(stream)).into();
+    output_blob.upload(content, None).await?;
     log::info!("Successuflly uploaded blob {}", output_blob.url());
     Ok(())
 }
@@ -91,7 +155,7 @@ async fn process_blobs(
     let mut blobs = input_container.list_blobs(None)?;
     while let Some(result) = blobs.next().await {
         let blob = result?;
-        let name = blob.name.as_ref().unwrap().content.as_ref().unwrap();
+        let name = blob.name.as_ref().unwrap();
         let input_blob = input_container.blob_client(name);
         let output_blob = output_container.blob_client(name);
         let result = process_blob(input_blob, output_blob, builder, signer).await;
