@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = { version = "1.0.98", features = ["backtrace"] }
+anyhow = { workspace = true }
 c2pa-azure = { path = "../../lib" }
-clap= { version = "4.5.39", features = ["derive"] }
-clap_derive = "4.5.32"
+clap= { version = "4.6.0", features = ["derive"] }
+clap_derive = "4.6.0"
 azure_core = { workspace = true}
 azure_identity = { workspace = true}
 log = { workspace = true }
