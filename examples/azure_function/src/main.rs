@@ -85,7 +85,8 @@ async fn verify_file(
         .await
         .map_err(warp::reject::custom)?;
 
-    let reader = Reader::from_stream_async(&content_type, file.as_file_mut())
+    let reader = Reader::from_context(Context::new())
+        .with_stream_async(&content_type, file.as_file_mut())
         .await
         .map_err(|x| warp::reject::custom(ApiError::C2pa(x)))?;
     let manifest = reader.json();

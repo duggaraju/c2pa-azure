@@ -33,14 +33,14 @@ const DEFAULT_MANIFEST: &str = include_str!("../../../test_data/manifest_definit
 #[derive(Debug, Clone)]
 struct SeekableFileStream {
     handle: Arc<Mutex<File>>,
-    len: usize,
+    len: u64,
     buffer_size: usize,
 }
 
 impl SeekableFileStream {
     async fn open(path: &Path) -> anyhow::Result<Self> {
         let file = File::open(path).await?;
-        let len = file.metadata().await?.len() as usize;
+        let len = file.metadata().await?.len();
         Ok(Self {
             handle: Arc::new(Mutex::new(file)),
             len,
@@ -67,8 +67,8 @@ impl SeekableStream for SeekableFileStream {
         Ok(())
     }
 
-    fn len(&self) -> usize {
-        self.len
+    fn len(&self) -> Option<u64> {
+        Some(self.len as u64)
     }
 
     fn buffer_size(&self) -> usize {
@@ -98,7 +98,7 @@ async fn sign_blob(
     let mut input = tempfile::tempfile()?;
     log::info!("Downloading blob {} ...", input_blob.url());
     let response = input_blob.download(None).await?;
-    let mut stream = response.into_body();
+    let mut stream = response.body;
     while let Some(res) = stream.next().await {
         let data = res?;
         input.write_all(&data)?;
