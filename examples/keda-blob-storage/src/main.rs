@@ -68,7 +68,7 @@ impl SeekableStream for SeekableFileStream {
     }
 
     fn len(&self) -> Option<u64> {
-        Some(self.len as u64)
+        Some(self.len)
     }
 
     fn buffer_size(&self) -> usize {

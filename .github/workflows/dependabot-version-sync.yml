@@ -1,0 +1,52 @@
+name: Sync workspace version with c2pa
+
+on:
+  pull_request:
+    paths:
+      - "Cargo.toml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-version:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract c2pa dependency version
+        id: c2pa
+        run: |
+          # Extract the c2pa version from [workspace.dependencies]
+          C2PA_VERSION=$(sed -n '/\[workspace\.dependencies\]/,/^\[/{/^c2pa\s*=/{s/.*version\s*=\s*"\([^"]*\)".*/\1/p}}' Cargo.toml)
+          echo "version=$C2PA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected c2pa version: $C2PA_VERSION"
+
+      - name: Extract current workspace version
+        id: workspace
+        run: |
+          WS_VERSION=$(sed -n '/\[workspace\.package\]/,/^\[/{/^version\s*=/{s/.*"\([^"]*\)".*/\1/p}}' Cargo.toml)
+          echo "version=$WS_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current workspace version: $WS_VERSION"
+
+      - name: Bump workspace version to match c2pa
+        if: steps.c2pa.outputs.version != steps.workspace.outputs.version
+        run: |
+          C2PA_VERSION="${{ steps.c2pa.outputs.version }}"
+          sed -i "/\[workspace\.package\]/,/^\[/s/^version = \".*\"/version = \"$C2PA_VERSION\"/" Cargo.toml
+          echo "Updated workspace version to $C2PA_VERSION"
+
+      - name: Commit and push
+        if: steps.c2pa.outputs.version != steps.workspace.outputs.version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml
+          git commit -m "chore: bump workspace version to ${{ steps.c2pa.outputs.version }}"
+          git push
