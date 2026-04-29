@@ -242,9 +242,9 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "atree"
-version = "0.5.2"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "132573478eb9ff973c6f75d0ed425ac12da77d266506483345f46743ecc83a98"
+checksum = "239d25181cb40f1955529367ee495e35d03aab4e578028f41e7abc8b21c367a8"
 
 [[package]]
 name = "autocfg"
@@ -537,9 +537,9 @@ checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
 name = "c2pa"
-version = "0.80.1"
+version = "0.80.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d15982e9163962ce6a8b694d6a4de6f90d5d5c80ea6a4331e33baa965066c47"
+checksum = "6522391a6e7eab9f599a3421ff1fc50cb71d991c6cb318efddf708c8f30ff792"
 dependencies = [
  "asn1-rs",
  "async-generic",
@@ -630,7 +630,7 @@ dependencies = [
 
 [[package]]
 name = "c2pa-azure"
-version = "0.80.1"
+version = "0.80.3"
 dependencies = [
  "async-trait",
  "azure_core",
