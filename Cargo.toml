@@ -27,7 +27,7 @@ tokio = { version = "1.52.1", features = [
     "macros",
     "io-util",
 ] }
-c2pa = { version = "0.80.1", features = [
+c2pa = { version = "0.80.2", features = [
     "pdf",
     "add_thumbnails",
     "file_io",
