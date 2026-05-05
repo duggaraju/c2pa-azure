@@ -90,14 +90,16 @@ pub use sign::{SigningOptions, TrustedSigner};
 
 #[cfg(test)]
 mod tests {
-    use c2pa::Reader;
+    use c2pa::{Context, Reader};
     use std::io::Cursor;
 
     #[tokio::test]
     async fn test_verify_file() {
         let data = include_bytes!("../../test_data/signed.png");
+        let settings = include_str!("../../test_data/settings.toml");
         let stream = Cursor::new(data);
-        let result = Reader::from_stream_async("png", stream).await.unwrap();
+        let context = Context::new().with_settings(settings).unwrap();
+        let result = Reader::from_context(context).with_stream_async("png", stream).await.unwrap();
         assert_eq!(
             &result.json(),
             include_str!("../../test_data/manifest.json")

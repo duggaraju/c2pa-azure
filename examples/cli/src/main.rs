@@ -8,7 +8,7 @@ use c2pa_azure::{SigningOptions, TrustedSigner};
 use clap::Parser;
 use std::{
     env,
-    fs::{self, File},
+    fs::{self, File, OpenOptions},
     path::PathBuf,
     sync::Arc,
 };
@@ -76,7 +76,12 @@ async fn main() -> Result<()> {
     let options = args.signing_options();
 
     let mut input = File::open(&args.input)?;
-    let mut output = File::create(args.output)?;
+    let mut output = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(&args.output)?;
     let format = args
         .input
         .extension()

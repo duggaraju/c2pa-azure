@@ -31,7 +31,7 @@ pub struct TrustedSigningClientOptions {
 impl TrustedSigningClientOptions {
     pub fn new(account: &str, certificate_profile: &str) -> Self {
         let user_agent = UserAgentOptions {
-            application_id: Some(format!("c2pa-azure/{}", env!("CARGO_PKG_VERSION"))),
+            application_id: Some(format!("c2pa-azure-{}", env!("CARGO_PKG_VERSION"))),
         };
         Self {
             api_version: DEFAULT_API_VERSION.to_owned(),
