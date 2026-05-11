@@ -537,9 +537,9 @@ checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
 name = "c2pa"
-version = "0.82.1"
+version = "0.83.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e96917bbbabdb4dd15030b67e4694b6751d618768fe88ad57f98aad7fd8e751"
+checksum = "265699fbaec6df8372add8b73b3cab26d4d274f9a0f78a1164704420a996f225"
 dependencies = [
  "asn1-rs",
  "async-generic",
@@ -561,13 +561,11 @@ dependencies = [
  "der",
  "ecdsa",
  "ed25519-dalek",
- "env_logger",
  "extfmt",
  "getrandom 0.2.16",
  "getrandom 0.3.4",
  "glob",
  "hex",
- "hex-literal",
  "http",
  "id3",
  "image",
@@ -631,7 +629,7 @@ dependencies = [
 
 [[package]]
 name = "c2pa-azure"
-version = "0.82.1"
+version = "0.83.0"
 dependencies = [
  "async-trait",
  "azure_core",
@@ -1786,12 +1784,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-
-[[package]]
-name = "hex-literal"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e712f64ec3850b98572bffac52e2c6f282b29fe6c5fa6d42334b30be438d95c1"
 
 [[package]]
 name = "hex_fmt"
@@ -4187,9 +4179,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.52.2"
+version = "1.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "110a78583f19d5cdb2c5ccf321d1290344e71313c6c37d43520d386027d18386"
+checksum = "8fc7f01b389ac15039e4dc9531aa973a135d7a4135281b12d7c1bc79fd57fffe"
 dependencies = [
  "bytes",
  "libc",
