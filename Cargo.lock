@@ -280,7 +280,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "azure_core 0.35.0",
+ "azure_core 1.0.0",
  "azure_identity",
  "c2pa",
  "c2pa-azure",
@@ -664,7 +664,7 @@ name = "c2pa-azure"
 version = "0.84.1"
 dependencies = [
  "async-trait",
- "azure_core 0.35.0",
+ "azure_core 1.0.0",
  "bytes",
  "c2pa",
  "chksum-hash-sha2-384",
@@ -859,7 +859,7 @@ name = "cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "azure_core 0.35.0",
+ "azure_core 1.0.0",
  "azure_identity",
  "c2pa",
  "c2pa-azure",
@@ -2355,7 +2355,7 @@ dependencies = [
  "anyhow",
  "async-lock",
  "async-trait",
- "azure_core 0.35.0",
+ "azure_core 1.0.0",
  "azure_identity",
  "azure_storage_blob",
  "c2pa",
