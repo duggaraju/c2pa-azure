@@ -8,7 +8,7 @@ c2pa-azure = { path = "../../lib" }
 async-trait = { workspace = true }
 futures = { workspace = true }
 tempfile = { workspace = true }
-warp = { version = "0.4.2", features = ["server"  ] }
+warp = { version = "0.4.3", features = ["server"  ] }
 anyhow = { workspace = true }
 azure_core = { workspace = true }
 azure_identity = { workspace = true }
