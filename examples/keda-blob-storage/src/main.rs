@@ -197,20 +197,17 @@ async fn main() -> Result<(), anyhow::Error> {
     let manifest_definition = ManifestDefinition::try_from(manifest_definition)?;
     let account = std::env::var("STORAGE_ACCOUNT").expect("missing STORAGE_ACCOUNT");
     let input_container_name = std::env::var("INPUT_CONTAINER").expect("missing INPUT_CONTAINER");
+
     let output_container_name =
         std::env::var("OUTPUT_CONTAINER").expect("missing OUTPUT_CONTAINER");
-    let input_container = BlobContainerClient::new(
-        &account,
-        &input_container_name,
-        Some(credential.clone()),
-        None,
-    )?;
-    let output_container = BlobContainerClient::new(
-        &account,
-        &output_container_name,
-        Some(credential.clone()),
-        None,
-    )?;
+    let input_container_url =
+        format!("https://{account}.blob.core.windows.net/{input_container_name}").parse()?;
+    let output_container_url =
+        format!("https://{account}.blob.core.windows.net/{output_container_name}").parse()?;
+    let input_container =
+        BlobContainerClient::new(input_container_url, Some(credential.clone()), None)?;
+    let output_container =
+        BlobContainerClient::new(output_container_url, Some(credential.clone()), None)?;
 
     let options = SigningOptions::init_from_env()?;
     let signer = TrustedSigner::new(credential, options).await?;

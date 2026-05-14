@@ -99,7 +99,10 @@ mod tests {
         let settings = include_str!("../../test_data/settings.toml");
         let stream = Cursor::new(data);
         let context = Context::new().with_settings(settings).unwrap();
-        let result = Reader::from_context(context).with_stream_async("png", stream).await.unwrap();
+        let result = Reader::from_context(context)
+            .with_stream_async("png", stream)
+            .await
+            .unwrap();
         assert_eq!(
             &result.json(),
             include_str!("../../test_data/manifest.json")
