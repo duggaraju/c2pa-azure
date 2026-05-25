@@ -18,7 +18,7 @@ azure_core = "1.0.0"
 azure_identity = "1.0.0"
 env_logger = "0.11.10"
 futures = "0.3.32"
-log = "0.4.29"
+log = "0.4.30"
 tempfile = "3.27.0"
 tokio = { version = "1.52.3", features = [
     "rt",
