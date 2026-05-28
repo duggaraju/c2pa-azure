@@ -24,12 +24,13 @@ pub struct TrustedSigningClientOptions {
     pub api_version: String,
     pub account: String,
     pub certificate_profile: String,
+    pub algorithm: SigningAlg,
     pub client_options: ClientOptions,
     pub scope: String,
 }
 
 impl TrustedSigningClientOptions {
-    pub fn new(account: &str, certificate_profile: &str) -> Self {
+    pub fn new(account: &str, certificate_profile: &str, algorithm: SigningAlg) -> Self {
         let user_agent = UserAgentOptions {
             application_id: Some(format!("c2pa-azure-{}", env!("CARGO_PKG_VERSION"))),
         };
@@ -37,6 +38,7 @@ impl TrustedSigningClientOptions {
             api_version: DEFAULT_API_VERSION.to_owned(),
             account: account.to_owned(),
             certificate_profile: certificate_profile.to_owned(),
+            algorithm,
             scope: DEFAULT_SCOPE.to_owned(),
             client_options: ClientOptions {
                 retry: RetryOptions::exponential(ExponentialRetryOptions {
@@ -116,7 +118,7 @@ impl TrustedSigningClient {
         }
     }
 
-    pub async fn get_certificates(&self) -> Result<Vec<Vec<u8>>> {
+    pub async fn get_certificatechain(&self) -> Result<Vec<Vec<u8>>> {
         let url = self.endpoint.join(&format!(
             "/codesigningaccounts/{}/certificateprofiles/{}/sign/certchain?api-version={}",
             self.options.account, self.options.certificate_profile, self.options.api_version
@@ -142,7 +144,7 @@ impl TrustedSigningClient {
         let context = Context::new();
         let mut request = Request::new(url, Method::Post);
         request.insert_header("content-type", "application/json");
-        let data = SigningRequest::new(SigningAlg::Ps384, data);
+        let data = SigningRequest::new(self.options.algorithm, data);
         request.set_json(&data)?;
 
         for _ in 0..5 {

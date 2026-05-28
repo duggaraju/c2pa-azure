@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use azure_core::{credentials::TokenCredential, error::ErrorKind, http::Url};
 use c2pa::{AsyncSigner, SigningAlg};
 use envconfig::Envconfig;
-use sha2::{Digest, Sha384};
+use sha2::{Digest, Sha256, Sha384, Sha512};
 use std::sync::Arc;
 
 use crate::acs::{TrustedSigningClient, TrustedSigningClientOptions};
@@ -53,11 +53,14 @@ impl TrustedSigner {
         credential: Arc<dyn TokenCredential>,
         options: SigningOptions,
     ) -> azure_core::Result<Self> {
-        let client_options =
-            TrustedSigningClientOptions::new(&options.account, &options.certificate_profile);
+        let client_options = TrustedSigningClientOptions::new(
+            &options.account,
+            &options.certificate_profile,
+            options.algorithm,
+        );
         let client =
             TrustedSigningClient::new(options.endpoint.clone(), credential, client_options);
-        let certificates = client.get_certificates().await?;
+        let certificates = client.get_certificatechain().await?;
 
         Ok(Self {
             options,
@@ -67,16 +70,26 @@ impl TrustedSigner {
     }
 
     fn get_digest(&self, data: Vec<u8>) -> azure_core::Result<Vec<u8>> {
-        if SigningAlg::Ps384 == self.options.algorithm {
-            let mut hasher = Sha384::new();
-            hasher.update(&data);
-            let result = hasher.finalize();
-            Ok(result.to_vec())
-        } else {
-            Err(azure_core::Error::new(
+        match self.options.algorithm {
+            SigningAlg::Ps256 => {
+                let mut hasher = Sha256::new();
+                hasher.update(&data);
+                Ok(hasher.finalize().to_vec())
+            }
+            SigningAlg::Ps384 => {
+                let mut hasher = Sha384::new();
+                hasher.update(&data);
+                Ok(hasher.finalize().to_vec())
+            }
+            SigningAlg::Ps512 => {
+                let mut hasher = Sha512::new();
+                hasher.update(&data);
+                Ok(hasher.finalize().to_vec())
+            }
+            _ => Err(azure_core::Error::new(
                 ErrorKind::Other,
                 "Unsupported algorithm",
-            ))
+            )),
         }
     }
 }
