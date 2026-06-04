@@ -5,7 +5,7 @@ edition = "2024"
 description = "Rust helpers for issuing C2PA signatures via Azure Trusted Signing."
 repository = "https://github.com/duggaraju/c2pa-azure"
 homepage = "https://github.com/duggaraju/c2pa-azure"
-documentation = "https://github.com/duggaraju/c2pa-azure#readme"
+documentation = "https://docs.rs/c2pa-azure"
 keywords = [
     "c2pa",
     "azure",
@@ -15,6 +15,10 @@ keywords = [
 ]
 license-file = "../LICENSE"
 readme = "../README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 async-trait = { workspace = true }
