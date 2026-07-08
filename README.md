@@ -1,27 +1,52 @@
 # c2pa-azure
 
-`c2pa-azure` is a Rust library that leverages the `c2pa-rs` library and Azure Code Signing service to add content credentials to media files. This library provides a robust solution for ensuring the authenticity and integrity of digital media by embedding cryptographic signatures and metadata.
+`c2pa-azure` is a Rust library that uses `c2pa-rs` and Azure Trusted Signing to add C2PA content credentials to media files. It helps ensure authenticity and integrity by embedding signed provenance metadata.
 
 ## Features
 
-- **Content Credentials**: Utilize `c2pa-rs` to embed content credentials into media files, ensuring their authenticity.
-- **Thumbnail Generation**: Automatically generates thumbnails for image files.
-- **Ingredient support**: Add the original file as an ingredient.
-- **Custom Assertions**: Ability to add custom assertions.
-- **Azure Code Signing**: Integrate with Azure Code Signing service to securely sign media content.
-- **Command Line Utility**: A command line tools for running locally or in a container in azure to sign a file.
-- **Azure Container App Support**: Support to create a container and deploy to Azure Container Apps for running and scaling using Keda.
+- **Content Credentials**: Uses `c2pa-rs` to embed C2PA claims into files.
+- **Thumbnail Generation**: Generates thumbnails for supported image inputs.
+- **Ingredient Support**: Can include the original asset as an ingredient.
+- **Custom Assertions**: Supports additional manifest assertions.
+- **Azure Trusted Signing Integration**: Signs content using Azure services.
+- **CLI Example**: Includes a command-line example app for local or containerized signing.
+- **Container App Example**: Includes deployment templates for Azure Container Apps + KEDA.
 
-## Building
+## Crate Features
 
-Add the following to your `Cargo.toml`:
+`c2pa-azure` defines feature flags in [lib/Cargo.toml](lib/Cargo.toml):
+
+- `pdf`: Enables PDF support (`c2pa/pdf`).
+- `openssl`: Enables OpenSSL backend (`c2pa/openssl`).
+- `rust_native_crypto`: Enables Rust-native crypto backend (`c2pa/rust_native_crypto`).
+
+Default behavior:
+
+- `pdf` is disabled by default.
+- `rust_native_crypto` is enabled by default.
+
+Enable PDF explicitly when needed:
+
+```bash
+cargo build -p c2pa-azure --features pdf
+```
+
+Use OpenSSL backend instead of defaults:
+
+```bash
+cargo build -p c2pa-azure --no-default-features --features openssl
+```
+
+## Building Workspace
 
 ```bash
 cargo build
 ```
 
-## Manifest and assertsion.
-The default manifest settings are stored in [manifest.json](manifest.json).  It can be edited to add or remove assertsion or ingredients as necessary.
+## Manifest and Assertions
+
+Default manifest settings are in [test_data/manifest.json](test_data/manifest.json). You can edit it to add or remove assertions and ingredients.
+
 ## Command Line Utility
 
 ### Adding Content Credentials
@@ -30,22 +55,28 @@ The default manifest settings are stored in [manifest.json](manifest.json).  It 
 az login
 cargo run --bin cli -- -i input.png -o output.png -e https://eus.codesigning.azure.net -a signing_account -c certificate_profile [-m manifest.json]
 ```
+
 ## Azure Container App
 
-Deploy the library as an Azure Container App to automate the signing process for media files uploaded to your Azure storage. It needs the following steps.
+Deploy as an Azure Container App to automate signing for files uploaded to Azure Storage.
 
-1. Edit common.bicepparm and container-app.bicepparm with the names of the resources you want to use.
+1. Edit [common.bicepparam](examples/deployment/common.bicepparam) and [container-app.bicepparam](examples/deployment/container-app.bicepparam) with your resource names.
 2. Create the common resoures like azure code signing account, container registry etc.
+
 ```bash
 cd deployment
 az group create group-name -location 'WestUS'
 az deployment group create --resource-group group-name  --template-file common.bicep --parameters common.bicepparam
 ```
+
 3. Build the container and push to the ACR. The registry name is same as what you entered in step 1.
+
 ```bash
 ./build.sh -n registry-name
 ```
+
 4. Deploy the continer app with a managed identity and give the required permissions.
+
 ```bash
 az deployment group create --resource-group group-name  --template-file container-app.bicep --parameters container-app.bicepparam
 ```

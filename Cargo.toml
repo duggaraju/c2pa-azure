@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.89.0"
+version = "0.89.1"
 
 [workspace.dependencies]
 anyhow = { version = "1.0.103", features = ["backtrace"] }
@@ -27,11 +27,9 @@ tokio = { version = "1.52.3", features = [
     "macros",
     "io-util",
 ] }
-c2pa = { version = "0.89.0", features = [
-    "pdf",
+c2pa = { version = "0.89.1", features = [
     "add_thumbnails",
     "file_io",
     "fetch_remote_manifests",
-    "rust_native_crypto",
     "http_reqwest"
 ], default-features = false }
