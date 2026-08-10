@@ -546,9 +546,9 @@ checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
 name = "c2pa"
-version = "0.90.7"
+version = "0.90.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "294ffb82624ac6b36f0921454da45c991ab2c4493426eadc8dacfdb184ddffb9"
+checksum = "dde450929835cdd7ad2032bb3b6c2347f34b5f65ac139bf60562dc017eb5ac0a"
 dependencies = [
  "asn1-rs",
  "async-generic",
@@ -637,7 +637,7 @@ dependencies = [
 
 [[package]]
 name = "c2pa-azure"
-version = "0.90.7"
+version = "0.90.8"
 dependencies = [
  "async-trait",
  "azure_core",
