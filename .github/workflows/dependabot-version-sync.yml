@@ -1,7 +1,7 @@
 name: Sync workspace version with c2pa
 
 on:
-  pull_request:
+  pull_request_target:
     paths:
       - "Cargo.toml"
 
@@ -12,7 +12,7 @@ permissions:
 jobs:
   sync-version:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -35,11 +35,16 @@ jobs:
           echo "version=$WS_VERSION" >> "$GITHUB_OUTPUT"
           echo "Current workspace version: $WS_VERSION"
 
+      - name: Install Rust toolchain
+        if: steps.c2pa.outputs.version != steps.workspace.outputs.version
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Bump workspace version to match c2pa
         if: steps.c2pa.outputs.version != steps.workspace.outputs.version
         run: |
           C2PA_VERSION="${{ steps.c2pa.outputs.version }}"
           sed -i "/\[workspace\.package\]/,/^\[/s/^version = \".*\"/version = \"$C2PA_VERSION\"/" Cargo.toml
+          cargo check --workspace
           echo "Updated workspace version to $C2PA_VERSION"
 
       - name: Commit and push
@@ -47,6 +52,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.toml
+          git add Cargo.toml Cargo.lock
           git commit -m "chore: bump workspace version to ${{ steps.c2pa.outputs.version }}"
           git push

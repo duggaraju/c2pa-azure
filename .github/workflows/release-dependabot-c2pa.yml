@@ -1,0 +1,85 @@
+name: Release Dependabot c2pa Update
+
+on:
+  pull_request_target:
+    types:
+      - closed
+    paths:
+      - "Cargo.toml"
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    if: github.event.pull_request.merged == true && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    outputs:
+      created: ${{ steps.tag.outputs.created }}
+      release_tag: ${{ steps.release.outputs.release_tag }}
+    steps:
+      - name: Checkout merged commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Determine release version
+        id: release
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          extract_c2pa_version() {
+            sed -n '/\[workspace\.dependencies\]/,/^\[/{/^c2pa\s*=/{s/.*version\s*=\s*"\([^"]*\)".*/\1/p}}' "$1"
+          }
+
+          git show "$BASE_SHA:Cargo.toml" > /tmp/Cargo.toml.before
+          OLD_C2PA_VERSION=$(extract_c2pa_version /tmp/Cargo.toml.before)
+          C2PA_VERSION=$(extract_c2pa_version Cargo.toml)
+          WORKSPACE_VERSION=$(sed -n '/\[workspace\.package\]/,/^\[/{/^version\s*=/{s/.*"\([^"]*\)".*/\1/p}}' Cargo.toml)
+
+          if [ -z "$C2PA_VERSION" ] || [ -z "$WORKSPACE_VERSION" ]; then
+            echo "Could not extract c2pa or workspace version"
+            exit 1
+          fi
+
+          if [ "$OLD_C2PA_VERSION" = "$C2PA_VERSION" ]; then
+            echo "The merged Dependabot PR did not change c2pa; no release is needed"
+            exit 0
+          fi
+
+          if [ "$WORKSPACE_VERSION" != "$C2PA_VERSION" ]; then
+            echo "Workspace version $WORKSPACE_VERSION does not match c2pa version $C2PA_VERSION"
+            exit 1
+          fi
+
+          echo "release_tag=v$C2PA_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        id: tag
+        if: steps.release.outputs.release_tag != ''
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: |
+          if git rev-parse "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Tag $RELEASE_TAG already exists; skipping"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+  build-and-publish:
+    needs: create-tag
+    if: needs.create-tag.outputs.created == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build-and-publish.yml
+    with:
+      release_tag: ${{ needs.create-tag.outputs.release_tag }}
+    secrets:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
