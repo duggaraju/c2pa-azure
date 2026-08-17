@@ -1,6 +1,10 @@
 # c2pa-azure
 
-`c2pa-azure` is a Rust library that uses `c2pa-rs` and Azure Trusted Signing to add C2PA content credentials to media files. It helps ensure authenticity and integrity by embedding signed provenance metadata.
+[![Crates.io](https://img.shields.io/crates/v/c2pa-azure.svg)](https://crates.io/crates/c2pa-azure)
+[![Rust docs check](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml/badge.svg)](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml)
+[![c2pa-rs crate version](https://img.shields.io/crates/v/c2pa.svg)](https://crates.io/crates/c2pa)
+
+`c2pa-azure` is a Rust library that uses `c2pa-rs` and Azure Trusted Signing to add C2PA content credentials to media files. It helps ensure authenticity and integrity by embedding signed provenance metadata into supported media files.
 
 ## Features
 
