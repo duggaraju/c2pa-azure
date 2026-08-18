@@ -41,3 +41,5 @@ log = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
+azure_identity = { workspace = true }
+url = "2.5.7"

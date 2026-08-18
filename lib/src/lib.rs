@@ -7,7 +7,7 @@
 //!
 //! ## Using `TrustedSigner`
 //!
-//! - `TokenCredential`: supply any Azure credential (for example `DefaultAzureCredential`).
+//! - `TokenCredential`: supply any Azure credential (for example `AzureCliCredential`).
 //! - [`SigningOptions`]: describe the Trusted Signing account, certificate profile, and optional timestamping authority.
 //! - [`Context`](c2pa::Context) + [`Builder`](c2pa::Builder): supply TOML settings and your manifest definition before invoking the signer.
 //!
@@ -19,14 +19,14 @@
 //!     sync::Arc,
 //! };
 //!
-//! use azure_identity::DefaultAzureCredential;
+//! use azure_identity::AzureCliCredential;
 //! use c2pa::{Builder, Context};
 //! use c2pa_azure::{SigningOptions, TrustedSigner};
 //! use url::Url;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     let credential = Arc::new(DefaultAzureCredential::default());
+//!     let credential = AzureCliCredential::new(None)?;
 //!
 //!     let options = SigningOptions::new(
 //!         Url::parse("https://eus.codesigning.azure.net")?,

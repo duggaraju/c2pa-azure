@@ -32,6 +32,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.release_tag || github.ref }}
+          lfs: true
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

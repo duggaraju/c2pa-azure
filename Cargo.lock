@@ -641,6 +641,7 @@ version = "0.90.15"
 dependencies = [
  "async-trait",
  "azure_core",
+ "azure_identity",
  "bytes",
  "c2pa",
  "chksum-hash-sha2-384",
@@ -651,6 +652,7 @@ dependencies = [
  "serde_json",
  "sha2 0.11.0",
  "tokio",
+ "url",
 ]
 
 [[package]]
