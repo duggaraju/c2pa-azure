@@ -6,6 +6,7 @@ on:
       - closed
     paths:
       - "Cargo.toml"
+      - "Cargo.lock"
 
 permissions:
   contents: write
@@ -29,13 +30,15 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          # Read the resolved version from Cargo.lock; the Cargo.toml requirement
+          # (e.g. "0.90.14") may not change for semver-compatible patch bumps.
           extract_c2pa_version() {
-            sed -n '/\[workspace\.dependencies\]/,/^\[/{/^c2pa\s*=/{s/.*version\s*=\s*"\([^"]*\)".*/\1/p}}' "$1"
+            sed -n '/^name = "c2pa"$/{n;s/version = "\(.*\)"/\1/p}' "$1"
           }
 
-          git show "$BASE_SHA:Cargo.toml" > /tmp/Cargo.toml.before
-          OLD_C2PA_VERSION=$(extract_c2pa_version /tmp/Cargo.toml.before)
-          C2PA_VERSION=$(extract_c2pa_version Cargo.toml)
+          git show "$BASE_SHA:Cargo.lock" > /tmp/Cargo.lock.before
+          OLD_C2PA_VERSION=$(extract_c2pa_version /tmp/Cargo.lock.before)
+          C2PA_VERSION=$(extract_c2pa_version Cargo.lock)
           WORKSPACE_VERSION=$(sed -n '/\[workspace\.package\]/,/^\[/{/^version\s*=/{s/.*"\([^"]*\)".*/\1/p}}' Cargo.toml)
 
           if [ -z "$C2PA_VERSION" ] || [ -z "$WORKSPACE_VERSION" ]; then

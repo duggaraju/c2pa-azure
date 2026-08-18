@@ -4,6 +4,7 @@ on:
   pull_request_target:
     paths:
       - "Cargo.toml"
+      - "Cargo.lock"
 
 permissions:
   contents: write
@@ -23,8 +24,9 @@ jobs:
       - name: Extract c2pa dependency version
         id: c2pa
         run: |
-          # Extract the c2pa version from [workspace.dependencies]
-          C2PA_VERSION=$(sed -n '/\[workspace\.dependencies\]/,/^\[/{/^c2pa\s*=/{s/.*version\s*=\s*"\([^"]*\)".*/\1/p}}' Cargo.toml)
+          # Read the resolved version from Cargo.lock; the Cargo.toml requirement
+          # (e.g. "0.90.14") may not change for semver-compatible patch bumps.
+          C2PA_VERSION=$(sed -n '/^name = "c2pa"$/{n;s/version = "\(.*\)"/\1/p}' Cargo.lock)
           echo "version=$C2PA_VERSION" >> "$GITHUB_OUTPUT"
           echo "Detected c2pa version: $C2PA_VERSION"
 
