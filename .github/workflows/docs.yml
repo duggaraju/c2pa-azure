@@ -4,16 +4,15 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
@@ -33,23 +32,32 @@ jobs:
       - name: Build documentation
         run: cargo doc -p c2pa-azure --no-deps --all-features
 
+      # Remaining steps publish to Pages; PRs only validate the build above.
       - name: Add index.html redirect
+        if: github.event_name != 'pull_request'
         run: echo '<meta http-equiv="refresh" content="0; url=c2pa_azure/index.html">' > target/doc/index.html
 
       - name: Remove lock file
+        if: github.event_name != 'pull_request'
         run: rm -f target/doc/.lock
 
       - name: Setup Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v4
 
       - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: target/doc
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
