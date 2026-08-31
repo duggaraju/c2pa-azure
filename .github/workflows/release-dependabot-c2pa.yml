@@ -80,7 +80,7 @@ jobs:
     needs: create-tag
     if: needs.create-tag.outputs.created == 'true'
     permissions:
-      contents: read
+      contents: write
     uses: ./.github/workflows/build-and-publish.yml
     with:
       release_tag: ${{ needs.create-tag.outputs.release_tag }}
