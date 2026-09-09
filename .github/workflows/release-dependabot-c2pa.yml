@@ -40,9 +40,11 @@ jobs:
           OLD_C2PA_VERSION=$(extract_c2pa_version /tmp/Cargo.lock.before)
           C2PA_VERSION=$(extract_c2pa_version Cargo.lock)
           WORKSPACE_VERSION=$(sed -n '/\[workspace\.package\]/,/^\[/{/^version\s*=/{s/.*"\([^"]*\)".*/\1/p}}' Cargo.toml)
+          C2PA_REQUIREMENT=$(sed -n 's/^c2pa = { version = "\([^"]*\)".*/\1/p' Cargo.toml)
+          README_VERSION=$(sed -n 's/.*c2pa-rs \([0-9][0-9.]*\).*/\1/p' README.md | head -n 1)
 
-          if [ -z "$C2PA_VERSION" ] || [ -z "$WORKSPACE_VERSION" ]; then
-            echo "Could not extract c2pa or workspace version"
+          if [ -z "$C2PA_VERSION" ] || [ -z "$WORKSPACE_VERSION" ] || [ -z "$C2PA_REQUIREMENT" ] || [ -z "$README_VERSION" ]; then
+            echo "Could not extract resolved c2pa, declared c2pa, workspace, or README version"
             exit 1
           fi
 
@@ -53,6 +55,16 @@ jobs:
 
           if [ "$WORKSPACE_VERSION" != "$C2PA_VERSION" ]; then
             echo "Workspace version $WORKSPACE_VERSION does not match c2pa version $C2PA_VERSION"
+            exit 1
+          fi
+
+          if [ "$C2PA_REQUIREMENT" != "$C2PA_VERSION" ]; then
+            echo "Declared c2pa version $C2PA_REQUIREMENT does not match resolved version $C2PA_VERSION"
+            exit 1
+          fi
+
+          if [ "$README_VERSION" != "$C2PA_VERSION" ]; then
+            echo "README c2pa version $README_VERSION does not match resolved version $C2PA_VERSION"
             exit 1
           fi
 

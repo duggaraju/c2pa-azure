@@ -37,23 +37,43 @@ jobs:
           echo "version=$WS_VERSION" >> "$GITHUB_OUTPUT"
           echo "Current workspace version: $WS_VERSION"
 
+      - name: Extract declared c2pa version
+        id: c2pa_requirement
+        run: |
+          C2PA_REQUIREMENT=$(sed -n 's/^c2pa = { version = "\([^"]*\)".*/\1/p' Cargo.toml)
+          echo "version=$C2PA_REQUIREMENT" >> "$GITHUB_OUTPUT"
+          echo "Declared c2pa version: $C2PA_REQUIREMENT"
+
+      - name: Extract README c2pa version
+        id: readme
+        run: |
+          README_VERSION=$(sed -n 's/.*c2pa-rs \([0-9][0-9.]*\).*/\1/p' README.md | head -n 1)
+          echo "version=$README_VERSION" >> "$GITHUB_OUTPUT"
+          echo "README c2pa version: $README_VERSION"
+
       - name: Install Rust toolchain
-        if: steps.c2pa.outputs.version != steps.workspace.outputs.version
+        if: steps.c2pa.outputs.version != steps.workspace.outputs.version || steps.c2pa.outputs.version != steps.c2pa_requirement.outputs.version || steps.c2pa.outputs.version != steps.readme.outputs.version
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Bump workspace version to match c2pa
-        if: steps.c2pa.outputs.version != steps.workspace.outputs.version
+      - name: Synchronize workspace and c2pa versions
+        if: steps.c2pa.outputs.version != steps.workspace.outputs.version || steps.c2pa.outputs.version != steps.c2pa_requirement.outputs.version || steps.c2pa.outputs.version != steps.readme.outputs.version
         run: |
           C2PA_VERSION="${{ steps.c2pa.outputs.version }}"
           sed -i "/\[workspace\.package\]/,/^\[/s/^version = \".*\"/version = \"$C2PA_VERSION\"/" Cargo.toml
+          sed -i "s/^c2pa = { version = \"[^\"]*\"/c2pa = { version = \"$C2PA_VERSION\"/" Cargo.toml
+          sed -i -E \
+            -e "s|(c2pa-rs )[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
+            -e "s|(c2pa--rs-)[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
+            -e "s|(crates/c2pa/)[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
+            README.md
           cargo check --workspace
-          echo "Updated workspace version to $C2PA_VERSION"
+          echo "Synchronized workspace, c2pa, and README versions to $C2PA_VERSION"
 
       - name: Commit and push
-        if: steps.c2pa.outputs.version != steps.workspace.outputs.version
+        if: steps.c2pa.outputs.version != steps.workspace.outputs.version || steps.c2pa.outputs.version != steps.c2pa_requirement.outputs.version || steps.c2pa.outputs.version != steps.readme.outputs.version
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.toml Cargo.lock
+          git add Cargo.toml Cargo.lock README.md
           git commit -m "chore: bump workspace version to ${{ steps.c2pa.outputs.version }}"
           git push
