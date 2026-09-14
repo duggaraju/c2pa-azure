@@ -637,7 +637,7 @@ dependencies = [
 
 [[package]]
 name = "c2pa-azure"
-version = "0.90.20"
+version = "0.90.22"
 dependencies = [
  "async-trait",
  "azure_core",
