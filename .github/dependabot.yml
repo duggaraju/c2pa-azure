@@ -1,7 +1,12 @@
 version: 2
 updates:
   - package-ecosystem: "cargo"
-    directory: "/"
+    directories:
+      - "/"
+      - "/examples/cli"
+      - "/examples/azure_function"
+      - "/examples/keda-blob-storage"
+      - "/lib"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
