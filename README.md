@@ -2,7 +2,7 @@
 
 [![c2pa-azure crate version](https://img.shields.io/crates/v/c2pa-azure.svg?label=c2pa-azure)](https://crates.io/crates/c2pa-azure)
 [![Rust docs check](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml/badge.svg)](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml)
-**|** [![c2pa-rs 0.90.22](https://img.shields.io/badge/c2pa--rs-0.90.22-blue)](https://crates.io/crates/c2pa/0.90.22)
+**|** [![c2pa-rs 0.91.0](https://img.shields.io/badge/c2pa--rs-0.91.0-blue)](https://crates.io/crates/c2pa/0.91.0)
 
 `c2pa-azure` is a Rust library that uses `c2pa-rs` and Azure Trusted Signing to add C2PA content credentials to media files. It helps ensure authenticity and integrity by embedding signed provenance m[...]
 

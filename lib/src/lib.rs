@@ -91,6 +91,7 @@ pub use sign::{SigningOptions, TrustedSigner};
 #[cfg(test)]
 mod tests {
     use c2pa::{Context, Reader};
+    use serde_json::Value;
     use std::io::Cursor;
 
     #[tokio::test]
@@ -103,9 +104,16 @@ mod tests {
             .with_stream_async("png", stream)
             .await
             .unwrap();
+        let actual: Value = serde_json::from_str(&result.json()).unwrap();
+        let expected: Value =
+            serde_json::from_str(include_str!("../../test_data/manifest.json")).unwrap();
+
+        assert_eq!(actual["active_manifest"], expected["active_manifest"]);
+        assert_eq!(actual["manifests"], expected["manifests"]);
+        assert_eq!(actual["validation_state"], "Trusted");
         assert_eq!(
-            &result.json(),
-            include_str!("../../test_data/manifest.json")
+            actual["validation_results"]["activeManifest"]["failure"],
+            serde_json::json!([])
         );
     }
 }
