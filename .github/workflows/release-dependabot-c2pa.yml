@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-dependabot-c2pa
+  cancel-in-progress: false
+
 jobs:
   create-tag:
     if: github.event.pull_request.merged == true && github.event.pull_request.user.login == 'dependabot[bot]'
@@ -19,16 +23,17 @@ jobs:
       created: ${{ steps.tag.outputs.created }}
       release_tag: ${{ steps.release.outputs.release_tag }}
     steps:
-      - name: Checkout merged commit
+      - name: Checkout base branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
 
       - name: Determine release version
         id: release
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
         run: |
           # Read the resolved version from Cargo.lock; the Cargo.toml requirement
           # (e.g. "0.90.14") may not change for semver-compatible patch bumps.
@@ -37,20 +42,53 @@ jobs:
           }
 
           git show "$BASE_SHA:Cargo.lock" > /tmp/Cargo.lock.before
+          git show "$MERGE_SHA:Cargo.lock" > /tmp/Cargo.lock.merged
           OLD_C2PA_VERSION=$(extract_c2pa_version /tmp/Cargo.lock.before)
+          MERGED_C2PA_VERSION=$(extract_c2pa_version /tmp/Cargo.lock.merged)
           C2PA_VERSION=$(extract_c2pa_version Cargo.lock)
+
+          if [ -z "$OLD_C2PA_VERSION" ] || [ -z "$MERGED_C2PA_VERSION" ] || [ -z "$C2PA_VERSION" ]; then
+            echo "Could not extract the previous, merged, or current c2pa version"
+            exit 1
+          fi
+
+          if [ "$OLD_C2PA_VERSION" = "$MERGED_C2PA_VERSION" ]; then
+            echo "The merged Dependabot PR did not change c2pa; no release is needed"
+            exit 0
+          fi
+
+          if [ "$C2PA_VERSION" != "$MERGED_C2PA_VERSION" ]; then
+            echo "Base branch c2pa version $C2PA_VERSION does not match merged version $MERGED_C2PA_VERSION"
+            exit 1
+          fi
+
+          echo "c2pa_version=$C2PA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "release_tag=v$C2PA_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Rust toolchain
+        if: steps.release.outputs.c2pa_version != ''
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Synchronize and validate release version
+        if: steps.release.outputs.c2pa_version != ''
+        env:
+          C2PA_VERSION: ${{ steps.release.outputs.c2pa_version }}
+        run: |
+          sed -i "/\[workspace\.package\]/,/^\[/s/^version = \".*\"/version = \"$C2PA_VERSION\"/" Cargo.toml
+          sed -i "s/^c2pa = { version = \"[^\"]*\"/c2pa = { version = \"$C2PA_VERSION\"/" Cargo.toml
+          sed -i -E \
+            -e "s|(c2pa-rs )[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
+            -e "s|(c2pa--rs-)[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
+            -e "s|(crates/c2pa/)[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
+            README.md
+
           WORKSPACE_VERSION=$(sed -n '/\[workspace\.package\]/,/^\[/{/^version\s*=/{s/.*"\([^"]*\)".*/\1/p}}' Cargo.toml)
           C2PA_REQUIREMENT=$(sed -n 's/^c2pa = { version = "\([^"]*\)".*/\1/p' Cargo.toml)
           README_VERSION=$(sed -n 's/.*c2pa-rs \([0-9][0-9.]*\).*/\1/p' README.md | head -n 1)
 
-          if [ -z "$C2PA_VERSION" ] || [ -z "$WORKSPACE_VERSION" ] || [ -z "$C2PA_REQUIREMENT" ] || [ -z "$README_VERSION" ]; then
-            echo "Could not extract resolved c2pa, declared c2pa, workspace, or README version"
+          if [ -z "$WORKSPACE_VERSION" ] || [ -z "$C2PA_REQUIREMENT" ] || [ -z "$README_VERSION" ]; then
+            echo "Could not extract declared c2pa, workspace, or README version"
             exit 1
-          fi
-
-          if [ "$OLD_C2PA_VERSION" = "$C2PA_VERSION" ]; then
-            echo "The merged Dependabot PR did not change c2pa; no release is needed"
-            exit 0
           fi
 
           if [ "$WORKSPACE_VERSION" != "$C2PA_VERSION" ]; then
@@ -68,7 +106,24 @@ jobs:
             exit 1
           fi
 
-          echo "release_tag=v$C2PA_VERSION" >> "$GITHUB_OUTPUT"
+          cargo check --workspace --locked
+
+      - name: Commit synchronized versions
+        if: steps.release.outputs.c2pa_version != ''
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          C2PA_VERSION: ${{ steps.release.outputs.c2pa_version }}
+        run: |
+          if git diff --quiet -- Cargo.toml Cargo.lock README.md; then
+            echo "Release versions are already synchronized"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml Cargo.lock README.md
+          git commit -m "chore: bump workspace version to $C2PA_VERSION"
+          git push origin "HEAD:$BASE_REF"
 
       - name: Create and push tag
         id: tag

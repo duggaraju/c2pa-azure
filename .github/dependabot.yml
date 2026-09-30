@@ -4,4 +4,16 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 1
+    groups:
+      # Keep c2pa isolated because its updates drive the crate version and release workflows.
+      c2pa:
+        patterns:
+          - "c2pa"
+      other-crates:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "c2pa"
     open-pull-requests-limit: 10
