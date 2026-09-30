@@ -18,7 +18,7 @@ concurrency:
 jobs:
   create-tag:
     if: github.event.pull_request.merged == true && github.event.pull_request.user.login == 'dependabot[bot]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       created: ${{ steps.tag.outputs.created }}
       release_tag: ${{ steps.release.outputs.release_tag }}
