@@ -5,6 +5,14 @@
 //! evidence from CLIs, Azure Functions, or containerized workers while reusing
 //! the same manifest definition and verification settings.
 //!
+//! ## Crate features
+//!
+//! PDF support (`pdf`) and Rust-native crypto (`rust_native_crypto`) are enabled
+//! by default and work on stable Rust; nightly is not required.
+//! To disable PDF support, use `--no-default-features --features rust_native_crypto`.
+//! To use OpenSSL while retaining PDF support, use
+//! `--no-default-features --features pdf,openssl`.
+//!
 //! ## Using `TrustedSigner`
 //!
 //! - `TokenCredential`: supply any Azure credential (for example `AzureCliCredential`).

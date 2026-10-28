@@ -21,7 +21,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = ["rust_native_crypto"]
+default = ["pdf", "rust_native_crypto"]
 pdf = ["c2pa/pdf"]
 openssl = ["c2pa/openssl"]
 rust_native_crypto = ["c2pa/rust_native_crypto"]

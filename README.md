@@ -26,19 +26,25 @@
 
 Default behavior:
 
-- `pdf` is disabled by default.
+- `pdf` is enabled by default.
 - `rust_native_crypto` is enabled by default.
 
-Enable PDF explicitly when needed. The `pdf` feature currently requires the Rust nightly toolchain:
+PDF support works on stable Rust; nightly is not required. Build with the default features:
 
 ```bash
-cargo +nightly build -p c2pa-azure --features pdf
+cargo build -p c2pa-azure
 ```
 
-Use OpenSSL backend instead of defaults:
+Disable PDF support while keeping the Rust-native crypto backend:
 
 ```bash
-cargo build -p c2pa-azure --no-default-features --features openssl
+cargo build -p c2pa-azure --no-default-features --features rust_native_crypto
+```
+
+Use the OpenSSL backend instead of Rust-native crypto, retaining PDF support:
+
+```bash
+cargo build -p c2pa-azure --no-default-features --features pdf,openssl
 ```
 
 ## Building Workspace
