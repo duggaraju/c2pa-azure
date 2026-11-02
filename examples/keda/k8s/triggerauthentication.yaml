@@ -1,0 +1,7 @@
+# How KEDA authenticates to the queue or storage it watches. Overlays set the
+# pod identity provider.
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: c2pa-worker
+spec: {}

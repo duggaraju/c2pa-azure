@@ -1,0 +1,72 @@
+# keda-worker on AKS with Microsoft Entra Workload Identity and the KEDA
+# azure-blob scaler. Edit worker.env and the image, then:
+#   kubectl apply -k azure/deploy/keda
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Must match serviceAccountNamespace in aks.bicepparam (the federated credential).
+namespace: default
+
+resources:
+  - ../../../examples/keda/k8s
+
+images:
+  - name: keda-worker
+    # ./build.sh -n c2paacsregistry -t keda-worker
+    newName: c2paacsregistry.azurecr.io/c2pa-acs-app
+    newTag: latest
+
+configMapGenerator:
+  - name: c2pa-worker
+    behavior: merge
+    envs:
+      - worker.env
+
+patches:
+  - path: patch.yaml
+
+# Copies values from worker.env to the scaler and the workload identity.
+replacements:
+  - source:
+      kind: ConfigMap
+      name: c2pa-worker
+      fieldPath: data.STORAGE_ACCOUNT
+    targets:
+      - select:
+          kind: ScaledJob
+          name: c2pa-worker
+        fieldPaths:
+          - spec.triggers.[type=azure-blob].metadata.accountName
+        options:
+          create: true
+  - source:
+      kind: ConfigMap
+      name: c2pa-worker
+      fieldPath: data.INPUT_CONTAINER
+    targets:
+      - select:
+          kind: ScaledJob
+          name: c2pa-worker
+        fieldPaths:
+          - spec.triggers.[type=azure-blob].metadata.blobContainerName
+        options:
+          create: true
+  - source:
+      kind: ConfigMap
+      name: c2pa-worker
+      fieldPath: data.AZURE_CLIENT_ID
+    targets:
+      - select:
+          kind: ServiceAccount
+          name: c2pa-worker
+        fieldPaths:
+          - metadata.annotations.[azure.workload.identity/client-id]
+        options:
+          create: true
+      - select:
+          kind: TriggerAuthentication
+          name: c2pa-worker
+        fieldPaths:
+          - spec.podIdentity.identityId
+        options:
+          create: true

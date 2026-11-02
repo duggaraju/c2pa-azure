@@ -1,77 +1,34 @@
-//! # c2pa-acs
+//! # c2pa-cloud
 //!
-//! Rust helpers for issuing C2PA signatures backed by Azure Trusted Signing.
-//! The [`TrustedSigner`] type bridges `c2pa-rs` with Azure so you can stamp
-//! evidence from CLIs, Azure Functions, or containerized workers while reusing
-//! the same manifest definition and verification settings.
+//! Rust helpers for issuing [C2PA](https://c2pa.org) signatures with cloud
+//! signing services. Each cloud lives behind a feature flag and exposes a
+//! signer that implements [`c2pa::AsyncSigner`], so the rest of your
+//! `c2pa-rs` code stays the same whichever cloud you sign with.
 //!
-//! ## Crate features
+//! | Feature | Module | Service | Certificate chain |
+//! |---------|--------|---------|-------------------|
+//! | `azure` | [`azure`] | Azure Trusted Signing (Artifact Signing) | Issued and returned by the service |
+//! | `aws`   | [`aws`]   | AWS KMS asymmetric keys | Supplied by you (PEM) |
+//! | `gcp`   | [`gcp`]   | Google Cloud KMS / Cloud HSM | Supplied by you (PEM) |
 //!
-//! PDF support (`pdf`) and Rust-native crypto (`rust_native_crypto`) are enabled
-//! by default and work on stable Rust; nightly is not required.
-//! To disable PDF support, use `--no-default-features --features rust_native_crypto`.
-//! To use OpenSSL while retaining PDF support, use
-//! `--no-default-features --features pdf,openssl`.
+//! No cloud is enabled by default; turn on the ones you need:
 //!
-//! ## Using `TrustedSigner`
-//!
-//! - `TokenCredential`: supply any Azure credential (for example `AzureCliCredential`).
-//! - [`SigningOptions`]: describe the Trusted Signing account, certificate profile, and optional timestamping authority.
-//! - [`Context`](c2pa::Context) + [`Builder`](c2pa::Builder): supply TOML settings and your manifest definition before invoking the signer.
-//!
-//! ### Minimal example
-//!
-//! ```no_run
-//! use std::{
-//!     fs::File,
-//!     sync::Arc,
-//! };
-//!
-//! use azure_identity::AzureCliCredential;
-//! use c2pa::{Builder, Context};
-//! use c2pa_azure::{SigningOptions, TrustedSigner};
-//! use url::Url;
-//!
-//! #[tokio::main]
-//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     let credential = AzureCliCredential::new(None)?;
-//!
-//!     let options = SigningOptions::new(
-//!         Url::parse("https://eus.codesigning.azure.net")?,
-//!         "signing_account".to_string(),
-//!         "certificate_profile".to_string(),
-//!         None,
-//!     );
-//!
-//!     let settings = r#"[verify]\nverify_after_sign = true"#;
-//!     let manifest_definition = r#"{"label":"example"}"#;
-//!
-//!     let context = Context::new().with_settings(settings)?;
-//!     let mut builder = Builder::from_context(context).with_definition(manifest_definition)?;
-//!     let signer = TrustedSigner::new(credential, options).await?;
-//!
-//!     let mut input = File::open("sample1.png")?;
-//!     let mut output = File::create("signed.png")?;
-//!
-//!     builder
-//!         .sign_async(&signer, "image/png", &mut input, &mut output)
-//!         .await?;
-//!     Ok(())
-//! }
+//! ```toml
+//! c2pa-cloud = { version = "0.91", features = ["aws"] }
 //! ```
 //!
-//! ### Environment variables
+//! AWS KMS and Cloud KMS only hold the private key. Have a C2PA-conformant
+//! certificate authority issue a certificate for the KMS public key and pass
+//! the chain to the signer; [`load_certificate_chain`] accepts inline PEM or a
+//! file path and orders it the way C2PA expects.
 //!
-//! - `SIGNING_ENDPOINT`: Trusted Signing endpoint (for example `https://eus.codesigning.azure.net`).
-//! - `SIGNING_ACCOUNT`: Trusted Signing account name.
-//! - `CERTIFICATE_PROFILE`: certificate profile used for signing.
-//! - `ALGORITHM` *(optional)*: override the default signature algorithm (`ps384`).
-//! - `TIME_AUTHORITY_URL` *(optional)*: RFC3161 timestamp authority.
+//! ## Other crate features
 //!
-//! ### Verifying a signed file
+//! PDF support (`pdf`) and Rust-native crypto (`rust_native_crypto`) are
+//! enabled by default. Use `--no-default-features --features pdf,openssl` to
+//! use OpenSSL instead.
 //!
-//! The library exposes a thin wrapper around [`c2pa::Reader`] so you can inspect
-//! manifests produced by `TrustedSigner` or any other C2PA producer.
+//! ## Verifying a signed file
 //!
 //! ```no_run
 //! use std::fs::File;
@@ -86,42 +43,21 @@
 //!     Ok(())
 //! }
 //! ```
-//!
-mod acs;
-mod auth;
-mod p7b;
-mod sign;
+
+mod certs;
+#[cfg(any(feature = "aws", feature = "gcp"))]
+mod digest;
+
+#[cfg(feature = "aws")]
+pub mod aws;
+#[cfg(feature = "azure")]
+pub mod azure;
+#[cfg(feature = "gcp")]
+pub mod gcp;
 
 pub use c2pa::Error;
+pub use certs::{certificate_chain_from_pem, load_certificate_chain};
 pub use envconfig::Envconfig;
-pub use sign::{SigningOptions, TrustedSigner};
 
-#[cfg(test)]
-mod tests {
-    use c2pa::{Context, Reader};
-    use serde_json::Value;
-    use std::io::Cursor;
-
-    #[tokio::test]
-    async fn test_verify_file() {
-        let data = include_bytes!("../../test_data/signed.png");
-        let settings = include_str!("../../test_data/settings.toml");
-        let stream = Cursor::new(data);
-        let context = Context::new().with_settings(settings).unwrap();
-        let result = Reader::from_context(context)
-            .with_stream_async("png", stream)
-            .await
-            .unwrap();
-        let actual: Value = serde_json::from_str(&result.json()).unwrap();
-        let expected: Value =
-            serde_json::from_str(include_str!("../../test_data/manifest.json")).unwrap();
-
-        assert_eq!(actual["active_manifest"], expected["active_manifest"]);
-        assert_eq!(actual["manifests"], expected["manifests"]);
-        assert_eq!(actual["validation_state"], "Trusted");
-        assert_eq!(
-            actual["validation_results"]["activeManifest"]["failure"],
-            serde_json::json!([])
-        );
-    }
-}
+/// RFC 3161 timestamp authority used by the KMS signers unless overridden.
+pub const DEFAULT_TIME_AUTHORITY_URL: &str = "http://timestamp.digicert.com";

@@ -1,0 +1,60 @@
+# AWS SAM template that runs examples/http_service on Lambda through the
+# Lambda Web Adapter. From this folder:
+#   sam build && sam deploy --guided
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: C2PA signing service backed by AWS KMS
+
+Parameters:
+  KmsKeyArn:
+    Type: String
+    Description: ARN of an asymmetric SIGN_VERIFY KMS key (RSA or ECC NIST)
+  CertificateChain:
+    Type: String
+    Description: >-
+      PEM certificate chain for the KMS key. Lambda limits all environment
+      variables to 4 KB, so long chains should be baked into the image and
+      referenced by path instead.
+  Algorithm:
+    Type: String
+    Default: ps384
+    AllowedValues: [ps256, ps384, ps512, es256, es384, es512]
+    Description: C2PA signing algorithm; must match the KMS key spec
+  TimeAuthorityUrl:
+    Type: String
+    Default: http://timestamp.digicert.com
+
+Resources:
+  SigningFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      DockerContext: ../../..
+      Dockerfile: examples/Dockerfile
+      DockerTag: latest
+      DockerBuildTarget: aws-lambda
+      DockerBuildArgs:
+        CLOUD: aws
+    Properties:
+      PackageType: Image
+      Architectures: [x86_64]
+      MemorySize: 1024
+      Timeout: 60
+      Environment:
+        Variables:
+          KMS_KEY_ID: !Ref KmsKeyArn
+          CERTIFICATE_CHAIN: !Ref CertificateChain
+          ALGORITHM: !Ref Algorithm
+          TIME_AUTHORITY_URL: !Ref TimeAuthorityUrl
+          RUST_LOG: info
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: kms:Sign
+              Resource: !Ref KmsKeyArn
+      FunctionUrlConfig:
+        AuthType: AWS_IAM
+
+Outputs:
+  FunctionUrl:
+    Description: POST files to <url>api/sign or <url>api/verify (SigV4 signed)
+    Value: !GetAtt SigningFunctionUrl.FunctionUrl

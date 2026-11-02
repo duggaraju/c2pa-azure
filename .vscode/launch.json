@@ -25,12 +25,12 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Function",
+            "name": "HTTP Service",
             "cargo": {
                 "args": [
                     "build",
                     "--bin",
-                    "function"
+                    "http-service"
                 ]
             },
             "cwd": "${workspaceFolder}",
@@ -39,18 +39,18 @@
                 "RUST_LOG": "info",
                 "SIGNING_ENDPOINT": "https://eus.codesigning.azure.net/",
                 "CERTIFICATE_PROFILE": "media-provenance-sign",
-                "SIUGNING_ACCOUNT": "ts-3e3ebaf7f0a04bf192c7" 
+                "SIGNING_ACCOUNT": "ts-3e3ebaf7f0a04bf192c7" 
             },
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Keda Blob Storage",
+            "name": "KEDA Worker",
             "cargo": {
                 "args": [
                     "build",
                     "--bin",
-                    "keda-blob-storage"
+                    "keda-worker"
                 ]
             },
             "cwd": "${workspaceFolder}",

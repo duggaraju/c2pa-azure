@@ -1,6 +1,13 @@
 target/
-.dockerignore
-Dockerfile
-deployment/
+.git/
 .vscode/
+.zed/
+**/Dockerfile
+.dockerignore
 *.md
+**/*.bicep
+**/*.bicepparam
+aws/deploy/
+gcp/deploy/
+azure/deploy/keda/
+examples/keda/k8s/

@@ -1,0 +1,22 @@
+[package]
+name = "http-service"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[features]
+default = ["azure"]
+azure = ["examples-common/azure"]
+aws = ["examples-common/aws"]
+gcp = ["examples-common/gcp"]
+
+[dependencies]
+anyhow = { workspace = true }
+c2pa = { workspace = true }
+env_logger = { workspace = true }
+examples-common = { path = "../common" }
+futures = { workspace = true }
+log = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true }
+warp = { version = "0.4.3", features = ["server"] }

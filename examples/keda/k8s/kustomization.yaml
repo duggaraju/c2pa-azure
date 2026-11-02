@@ -1,0 +1,25 @@
+# Cloud-agnostic base for running keda-worker as a KEDA ScaledJob. It is not
+# deployable on its own: each cloud's overlay (azure/deploy/keda,
+# aws/deploy/keda, gcp/deploy/keda) sets the image, the worker settings, the
+# workload identity and the KEDA trigger.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - serviceaccount.yaml
+  - triggerauthentication.yaml
+  - scaledjob.yaml
+
+# Lets name prefixes/suffixes reach the references inside the KEDA resources.
+configurations:
+  - kustomizeconfig.yaml
+
+configMapGenerator:
+  - name: c2pa-worker
+    literals:
+      - RUST_LOG=info
+
+# Every job reads the current ConfigMap when it starts, so a hash suffix would
+# only leave old ConfigMaps behind.
+generatorOptions:
+  disableNameSuffixHash: true

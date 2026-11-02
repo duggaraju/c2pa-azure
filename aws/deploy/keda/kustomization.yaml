@@ -1,0 +1,65 @@
+# keda-worker on EKS with IAM roles for service accounts (IRSA) and the KEDA
+# aws-sqs-queue scaler. Edit worker.env and the image, then:
+#   kubectl create secret generic c2pa-certificate-chain --from-file=chain.pem
+#   kubectl apply -k aws/deploy/keda
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Must match the service account in the worker role's trust policy.
+namespace: default
+
+resources:
+  - ../../../examples/keda/k8s
+
+images:
+  - name: keda-worker
+    newName: <account-id>.dkr.ecr.<region>.amazonaws.com/c2pa-keda-worker
+    newTag: latest
+
+configMapGenerator:
+  - name: c2pa-worker
+    behavior: merge
+    envs:
+      - worker.env
+
+patches:
+  - path: patch.yaml
+
+# Copies values from worker.env to the scaler and the workload identity.
+replacements:
+  - source:
+      kind: ConfigMap
+      name: c2pa-worker
+      fieldPath: data.QUEUE_URL
+    targets:
+      - select:
+          kind: ScaledJob
+          name: c2pa-worker
+        fieldPaths:
+          - spec.triggers.[type=aws-sqs-queue].metadata.queueURL
+        options:
+          create: true
+  - source:
+      kind: ConfigMap
+      name: c2pa-worker
+      fieldPath: data.AWS_REGION
+    targets:
+      - select:
+          kind: ScaledJob
+          name: c2pa-worker
+        fieldPaths:
+          - spec.triggers.[type=aws-sqs-queue].metadata.awsRegion
+        options:
+          create: true
+  - source:
+      kind: ConfigMap
+      name: c2pa-worker
+      fieldPath: data.AWS_ROLE_ARN
+    targets:
+      - select:
+          kind: ServiceAccount
+          name: c2pa-worker
+        fieldPaths:
+          - metadata.annotations.[eks.amazonaws.com/role-arn]
+        options:
+          create: true

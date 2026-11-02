@@ -1,23 +1,29 @@
-use azure_core::credentials::TokenCredential;
-use azure_identity::{AzureCliCredential, ManagedIdentityCredential};
+//! Cloud-agnostic HTTP signing service.
+//!
+//! `POST /api/sign` returns the request body with content credentials added;
+//! `POST /api/verify` returns the manifest store of the request body as JSON;
+//! `GET /healthz` is a readiness probe.
+//!
+//! The same binary runs as an Azure Functions custom handler, on AWS Lambda
+//! behind the Lambda Web Adapter, or on Google Cloud Run. The signer is chosen
+//! with the `azure`/`aws`/`gcp` features and the `CLOUD` environment variable.
+
 use c2pa::{Builder, Context, Reader};
-use c2pa_azure::{Envconfig, SigningOptions, TrustedSigner};
+use examples_common::Cloud;
 use futures::StreamExt;
-use std::fs::{self, File};
-use std::io::{Cursor, Write};
+use std::env;
+use std::fs::File;
+use std::io::{Cursor, Seek, Write};
 use std::net::Ipv4Addr;
-use std::path::Path;
 use std::sync::Arc;
-use std::{env, io::Seek};
 use tempfile::NamedTempFile;
 use warp::{Buf, Error, Filter, Rejection, Reply, Stream, reject::Reject};
 
 #[allow(dead_code)]
 #[derive(Debug)]
 enum ApiError {
-    Azure(azure_core::Error),
     Io(std::io::Error),
-    C2pa(c2pa_azure::Error),
+    C2pa(c2pa::Error),
     Warp(Error),
 }
 
@@ -32,7 +38,7 @@ async fn copy_to_file(
             Ok(mut buf) => {
                 while buf.has_remaining() {
                     let chunk = buf.chunk();
-                    file.write_all(chunk).unwrap();
+                    file.write_all(chunk).map_err(ApiError::Io)?;
                     buf.advance(chunk.len());
                 }
             }
@@ -97,30 +103,31 @@ async fn verify_file(
     ))
 }
 
-const DEFAULT_MANIFEST: &str = include_str!("../../../test_data/manifest_definition.json");
+/// Azure Functions passes the port in `FUNCTIONS_CUSTOMHANDLER_PORT`; Cloud
+/// Run and the Lambda Web Adapter use `PORT`.
+fn listen_port() -> anyhow::Result<u16> {
+    for key in ["FUNCTIONS_CUSTOMHANDLER_PORT", "PORT"] {
+        if let Ok(value) = env::var(key) {
+            return value
+                .parse()
+                .map_err(|err| anyhow::anyhow!("{key}={value} is not a valid port: {err}"));
+        }
+    }
+    Ok(3000)
+}
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
-    for (key, value) in std::env::vars() {
-        log::info!("{key}: {value}");
+    // Only names: values can hold credentials (Lambda sets AWS_SECRET_ACCESS_KEY).
+    for (key, _) in env::vars() {
+        log::debug!("env: {key}");
     }
-    let credentials: Arc<dyn TokenCredential> = if cfg!(debug_assertions) {
-        AzureCliCredential::new(None)?
-    } else {
-        ManagedIdentityCredential::new(None)?
-    };
-    let manifest_definition = env::var("MANIFEST_DEFINITION").ok();
-    let manifest_definition = Arc::new(if let Some(manifest) = manifest_definition {
-        let path = Path::new(&manifest);
-        if path.exists() {
-            fs::read_to_string(path)?
-        } else {
-            manifest
-        }
-    } else {
-        DEFAULT_MANIFEST.to_owned()
-    });
+
+    let cloud = Cloud::select(None)?;
+    let signer = examples_common::signer_from_env(cloud).await?;
+    let manifest_definition = Arc::new(examples_common::manifest_definition_from_env()?);
+    let context = Context::new().with_async_signer(signer).into_shared();
 
     let content_type = warp::header::<String>("content-type");
 
@@ -130,9 +137,6 @@ async fn main() -> Result<(), anyhow::Error> {
         .and(warp::filters::body::stream())
         .and_then(verify_file);
 
-    let options = SigningOptions::init_from_env()?;
-    let signer = TrustedSigner::new(credentials, options).await?;
-    let context = Context::new().with_async_signer(signer).into_shared();
     let sign = warp::path("sign")
         .and(warp::path::end())
         .and(warp::any().map(move || context.clone()))
@@ -141,13 +145,18 @@ async fn main() -> Result<(), anyhow::Error> {
         .and(warp::filters::body::stream())
         .and_then(sign_file);
 
-    let routes = warp::post().and(warp::path("api")).and(verify.or(sign));
-    let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";
-    let port: u16 = match env::var(port_key) {
-        Ok(val) => val.parse().expect("Custom Handler port is not a number!"),
-        Err(_) => 3000,
-    };
+    let health = warp::get()
+        .and(warp::path("healthz"))
+        .and(warp::path::end())
+        .map(|| "ok");
 
+    let routes = warp::post()
+        .and(warp::path("api"))
+        .and(verify.or(sign))
+        .or(health);
+
+    let port = listen_port()?;
+    log::info!("Listening on port {port} with the {cloud} signer");
     warp::serve(routes).run((Ipv4Addr::UNSPECIFIED, port)).await;
     Ok(())
 }
