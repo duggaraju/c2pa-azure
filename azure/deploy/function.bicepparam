@@ -1,0 +1,10 @@
+using './function.bicep'
+
+param containerRegistryName = 'c2paacsregistry'
+param imageName = 'c2pa-function'
+param storageAccountName = 'c2paacsmediastorage'
+param codeSigningAccountName = 'c2paacscodesigning'
+param certificateProfileName = 'media-provenance-sign'
+param functionManagedIdentityName = 'c2paacsfunctionidentity'
+param hostingPlanName = 'c2paacsfunctionplan'
+param functionAppName = 'c2paacsfunction'

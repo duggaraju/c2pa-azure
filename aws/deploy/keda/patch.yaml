@@ -1,0 +1,35 @@
+# Values that come from worker.env are filled in by the replacements in
+# kustomization.yaml.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: c2pa-worker
+  annotations:
+    # eks.amazonaws.com/role-arn: AWS_ROLE_ARN
+    eks.amazonaws.com/sts-regional-endpoints: "true"
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: c2pa-worker
+spec:
+  podIdentity:
+    provider: aws
+    # KEDA assumes the IRSA role on the worker's service account.
+    identityOwner: workload
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: c2pa-worker
+spec:
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: c2pa-worker
+      metadata:
+        # queueURL: QUEUE_URL
+        # awsRegion: AWS_REGION
+        # Each job receives up to 10 messages. Messages being processed count
+        # too, because KEDA subtracts the running jobs.
+        queueLength: "10"

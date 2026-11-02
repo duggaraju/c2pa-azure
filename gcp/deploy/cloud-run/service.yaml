@@ -1,0 +1,48 @@
+# Cloud Run service for examples/http_service built with CLOUD=gcp.
+#   gcloud run services replace service.yaml --region <region>
+# The service account needs roles/cloudkms.signerVerifier on the key and
+# roles/secretmanager.secretAccessor on the certificate chain secret.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: c2pa-signing
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "5"
+    spec:
+      serviceAccountName: c2pa-signer@<project-id>.iam.gserviceaccount.com
+      containerConcurrency: 10
+      timeoutSeconds: 120
+      containers:
+        - image: <region>-docker.pkg.dev/<project-id>/<repository>/c2pa-http-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KMS_KEY_NAME
+              value: projects/<project-id>/locations/<location>/keyRings/<key-ring>/cryptoKeys/<key>/cryptoKeyVersions/1
+            - name: CERTIFICATE_CHAIN
+              value: /secrets/c2pa/chain.pem
+            - name: TIME_AUTHORITY_URL
+              value: http://timestamp.digicert.com
+            - name: RUST_LOG
+              value: info
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          startupProbe:
+            httpGet:
+              path: /healthz
+          volumeMounts:
+            - name: certificate-chain
+              mountPath: /secrets/c2pa
+              readOnly: true
+      volumes:
+        - name: certificate-chain
+          secret:
+            secretName: c2pa-certificate-chain
+            items:
+              - key: latest
+                path: chain.pem

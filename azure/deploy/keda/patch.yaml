@@ -1,0 +1,38 @@
+# Values that come from worker.env are filled in by the replacements in
+# kustomization.yaml.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: c2pa-worker
+  # azure.workload.identity/client-id: AZURE_CLIENT_ID
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: c2pa-worker
+spec:
+  podIdentity:
+    # The KEDA operator exchanges its own service account token for this
+    # identity, so the identity is also federated with keda-operator.
+    provider: azure-workload
+    # identityId: AZURE_CLIENT_ID
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: c2pa-worker
+spec:
+  jobTargetRef:
+    template:
+      metadata:
+        labels:
+          # Lets the workload identity webhook inject the federated token.
+          azure.workload.identity/use: "true"
+  triggers:
+    - type: azure-blob
+      authenticationRef:
+        name: c2pa-worker
+      metadata:
+        # accountName: STORAGE_ACCOUNT
+        # blobContainerName: INPUT_CONTAINER
+        blobCount: "5"

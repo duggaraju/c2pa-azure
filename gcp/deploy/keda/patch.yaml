@@ -1,0 +1,35 @@
+# Values that come from worker.env are filled in by the replacements in
+# kustomization.yaml.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: c2pa-worker
+  # IAM roles are granted to this Kubernetes service account directly. To
+  # impersonate a Google service account instead:
+  # annotations:
+  #   iam.gke.io/gcp-service-account: c2pa-worker@<project-id>.iam.gserviceaccount.com
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: c2pa-worker
+spec:
+  podIdentity:
+    # KEDA lists the bucket with the keda-operator service account's identity.
+    provider: gcp
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: c2pa-worker
+spec:
+  # Cloud Storage has no leases, so run one worker at a time to avoid signing
+  # the same object twice. Each job drains the whole bucket.
+  maxReplicaCount: 1
+  triggers:
+    - type: gcp-storage
+      authenticationRef:
+        name: c2pa-worker
+      metadata:
+        # bucketName: INPUT_BUCKET
+        targetObjectCount: "100"

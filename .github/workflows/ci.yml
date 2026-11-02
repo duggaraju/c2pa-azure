@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  libraries:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Clippy (each c2pa-cloud provider on its own)
+        run: |
+          for cloud in azure aws gcp; do
+            cargo clippy -p c2pa-cloud --no-default-features --features "rust_native_crypto,$cloud" -- -D warnings
+          done
+
+      - name: Clippy
+        run: cargo clippy -p c2pa-azure -p c2pa-cloud --all-features --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test -p c2pa-azure -p c2pa-cloud --all-features
+
+      - name: Package c2pa-azure
+        run: cargo publish -p c2pa-azure --dry-run
+
+  examples:
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cloud: [azure, aws, gcp]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.cloud }}
+
+      - name: Clippy
+        run: cargo clippy -p examples-common -p cli -p http-service -p keda-worker --no-default-features --features ${{ matrix.cloud }} --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test -p examples-common -p cli -p http-service -p keda-worker --no-default-features --features ${{ matrix.cloud }}
+
+  manifests:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Render KEDA overlays
+        run: |
+          for cloud in azure aws gcp; do
+            kustomize build "$cloud/deploy/keda" > /dev/null
+          done

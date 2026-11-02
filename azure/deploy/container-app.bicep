@@ -185,7 +185,7 @@ resource containerapp 'Microsoft.App/containerApps@2024-10-02-preview' = {
               value: certificateProfileName
             }
             {
-              name: 'IDENTITY_CLIENT_ID'
+              name: 'AZURE_CLIENT_ID'
               value: appManagedIdentity.properties.clientId
             }
             /* uncomment for tracing.
@@ -210,9 +210,12 @@ resource containerapp 'Microsoft.App/containerApps@2024-10-02-preview' = {
             name: 'storage-blob-scaling'
             custom: {
               type: 'azure-blob'
+              // KEDA counts the input blobs as the app's managed identity.
+              identity: appManagedIdentity.id
               metadata: {
-                blobStorageAccount: storageAccount.name
-                blobContainer: inputContainerName
+                accountName: storageAccount.name
+                blobContainerName: inputContainerName
+                blobCount: '5'
               }
             }
           }

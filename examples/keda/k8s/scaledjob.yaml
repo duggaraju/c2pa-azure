@@ -1,0 +1,47 @@
+# Starts keda-worker jobs while there is work. Each job signs the pending files
+# it can claim and exits. Overlays add the trigger.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: c2pa-worker
+spec:
+  pollingInterval: 30
+  maxReplicaCount: 5
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTargetRef:
+    parallelism: 1
+    # Failed files stay in the input and are retried by a later job.
+    backoffLimit: 0
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: c2pa-worker
+      spec:
+        serviceAccountName: c2pa-worker
+        restartPolicy: Never
+        containers:
+          - name: keda-worker
+            # Replaced with the registry image by the overlay's `images`.
+            image: keda-worker
+            envFrom:
+              - configMapRef:
+                  name: c2pa-worker
+            resources:
+              requests:
+                cpu: 500m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+            volumeMounts:
+              - name: certificate-chain
+                mountPath: /etc/c2pa
+                readOnly: true
+        volumes:
+          # Certificate chain for KMS keys (AWS and Google Cloud), used as
+          # CERTIFICATE_CHAIN=/etc/c2pa/chain.pem:
+          #   kubectl create secret generic c2pa-certificate-chain --from-file=chain.pem
+          - name: certificate-chain
+            secret:
+              secretName: c2pa-certificate-chain
+              optional: true

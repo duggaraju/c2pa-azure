@@ -1,0 +1,41 @@
+# keda-worker on GKE with Workload Identity Federation for GKE and the KEDA
+# gcp-storage scaler. Edit worker.env and the image, then:
+#   kubectl create secret generic c2pa-certificate-chain --from-file=chain.pem
+#   kubectl apply -k gcp/deploy/keda
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Must match the namespace in the worker's IAM principal.
+namespace: default
+
+resources:
+  - ../../../examples/keda/k8s
+
+images:
+  - name: keda-worker
+    newName: <region>-docker.pkg.dev/<project-id>/<repository>/c2pa-keda-worker
+    newTag: latest
+
+configMapGenerator:
+  - name: c2pa-worker
+    behavior: merge
+    envs:
+      - worker.env
+
+patches:
+  - path: patch.yaml
+
+# Copies values from worker.env to the scaler.
+replacements:
+  - source:
+      kind: ConfigMap
+      name: c2pa-worker
+      fieldPath: data.INPUT_BUCKET
+    targets:
+      - select:
+          kind: ScaledJob
+          name: c2pa-worker
+        fieldPaths:
+          - spec.triggers.[type=gcp-storage].metadata.bucketName
+        options:
+          create: true
