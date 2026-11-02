@@ -1,10 +1,15 @@
-# c2pa-azure
+# C2PA Cloud
 
 [![c2pa-azure crate version](https://img.shields.io/crates/v/c2pa-azure.svg?label=c2pa-azure)](https://crates.io/crates/c2pa-azure)
 [![Rust docs check](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml/badge.svg)](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml)
 **|** [![c2pa-rs 0.91.7](https://img.shields.io/badge/c2pa--rs-0.91.7-blue)](https://crates.io/crates/c2pa/0.91.7)
 
-`c2pa-azure` is a Rust library that uses `c2pa-rs` and Azure Trusted Signing to add C2PA content credentials to media files. It helps ensure authenticity and integrity by embedding signed provenance m[...]
+Rust libraries and examples for signing C2PA content credentials using Azure Trusted Signing, AWS KMS, or Google Cloud KMS, built on `c2pa-rs`.
+
+The repository contains two crates:
+
+- **[`c2pa-azure`](azure/lib/README.md)**: the published Azure Trusted Signing crate. Existing users can continue using it without changes.
+- **[`c2pa-cloud`](lib/README.md)**: a preview multi-cloud crate, not yet published. Its `azure` feature re-exports the same Azure signer from `c2pa-azure`; its `aws` and `gcp` features provide KMS signers.
 
 ## Features
 
@@ -12,7 +17,7 @@
 - **Thumbnail Generation**: Generates thumbnails for supported image inputs.
 - **Ingredient Support**: Can include the original asset as an ingredient.
 - **Custom Assertions**: Supports additional manifest assertions.
-- **Azure Trusted Signing Integration**: Signs content using Azure services.
+- **Cloud Signing**: Azure Trusted Signing, AWS KMS, and Google Cloud KMS signers implementing `c2pa::AsyncSigner`.
 - **CLI Example**: Includes a command-line example app for local or containerized signing.
 - **HTTP Service Example**: Signing service hosted on Azure Functions, AWS Lambda or Google Cloud Run.
 - **KEDA Example**: Storage worker that signs uploaded files, with Azure, AWS and Google Cloud backends.
@@ -28,11 +33,35 @@
 
 ## Crate Features
 
-`c2pa-azure` defines feature flags in [azure/lib/Cargo.toml](azure/lib/Cargo.toml):
+### Cloud Selection
+
+`c2pa-cloud` defines optional provider features in [lib/Cargo.toml](lib/Cargo.toml). No provider is enabled by default; enable one or more as needed.
+
+| Feature | Signing service | Certificate chain |
+|---------|-----------------|-------------------|
+| `azure` | Azure Trusted Signing | Issued and returned by the service |
+| `aws` | AWS KMS | Supplied by you (PEM) |
+| `gcp` | Google Cloud KMS / Cloud HSM | Supplied by you (PEM) |
+
+Build the preview crate from this workspace with a provider enabled:
+
+```bash
+cargo build -p c2pa-cloud --features azure
+cargo build -p c2pa-cloud --features aws
+cargo build -p c2pa-cloud --features gcp
+```
+
+The published `c2pa-azure` crate is always Azure-specific and does not need a provider feature.
+
+### PDF and Crypto Backends
+
+Both crates support the following features:
 
 - `pdf`: Enables PDF support (`c2pa/pdf`).
 - `openssl`: Enables OpenSSL backend (`c2pa/openssl`).
 - `rust_native_crypto`: Enables Rust-native crypto backend (`c2pa/rust_native_crypto`).
+
+`c2pa-cloud` forwards these features to `c2pa-azure` when its `azure` feature is enabled.
 
 Default behavior:
 
@@ -55,6 +84,12 @@ Use the OpenSSL backend instead of Rust-native crypto, retaining PDF support:
 
 ```bash
 cargo build -p c2pa-azure --no-default-features --features pdf,openssl
+```
+
+For `c2pa-cloud`, select the provider as well, for example:
+
+```bash
+cargo build -p c2pa-cloud --no-default-features --features azure,pdf,openssl
 ```
 
 ## Building Workspace
@@ -129,7 +164,7 @@ kubectl apply -k azure/deploy/keda   # AKS; aws/deploy/keda for EKS, gcp/deploy/
 
 See [examples/keda/README.md](examples/keda/README.md) and the deploy README of each cloud.
 
-## Azure Container App
+## Azure Container Apps Deployment
 
 Deploy as an Azure Container App to automate signing for files uploaded to Azure Storage.
 

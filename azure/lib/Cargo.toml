@@ -14,7 +14,7 @@ keywords = [
     "content-integrity",
 ]
 license-file = "../../LICENSE"
-readme = "../../README.md"
+readme = "README.md"
 
 [package.metadata.docs.rs]
 all-features = true
