@@ -98,30 +98,64 @@ pub use sign::{SigningOptions, TrustedSigner};
 
 #[cfg(test)]
 mod tests {
-    use c2pa::{Context, Reader};
+    use c2pa::{Context, Reader, settings::TrustListKind};
     use serde_json::Value;
     use std::io::Cursor;
 
-    #[tokio::test]
-    async fn test_verify_file() {
+    async fn verify_file(context: Context) -> Value {
         let data = include_bytes!("../../../test_data/signed.png");
-        let settings = include_str!("../../../test_data/settings.toml");
         let stream = Cursor::new(data);
-        let context = Context::new().with_settings(settings).unwrap();
         let result = Reader::from_context(context)
             .with_stream_async("png", stream)
             .await
             .unwrap();
-        let actual: Value = serde_json::from_str(&result.json()).unwrap();
+        serde_json::from_str(&result.json()).unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_verify_file() {
+        let settings = include_str!("../../../test_data/settings.toml");
+        let context = Context::new().with_settings(settings).unwrap();
+        let actual = verify_file(context).await;
         let expected: Value =
             serde_json::from_str(include_str!("../../../test_data/manifest.json")).unwrap();
 
         assert_eq!(actual["active_manifest"], expected["active_manifest"]);
         assert_eq!(actual["manifests"], expected["manifests"]);
-        assert_eq!(actual["validation_state"], "Trusted");
+        assert_eq!(
+            actual["validation_state"], "Trusted",
+            "Validation results: {}",
+            actual["validation_results"]
+        );
         assert_eq!(
             actual["validation_results"]["activeManifest"]["failure"],
             serde_json::json!([])
+        );
+        assert!(
+            actual["validation_results"]["activeManifest"]["success"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|status| status["code"] == "timeStamp.trusted")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_signer_anchors_do_not_trust_timestamps() {
+        let settings = include_str!("../../../test_data/settings.toml");
+        let mut context = Context::new().with_settings(settings).unwrap();
+        for anchor in context.settings_mut().trust.anchors.as_mut().unwrap() {
+            anchor.trust_kind = TrustListKind::Manifest;
+        }
+
+        let actual = verify_file(context).await;
+        assert_eq!(actual["validation_state"], "Invalid");
+        assert!(
+            actual["validation_results"]["activeManifest"]["informational"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|status| status["code"] == "timeStamp.untrusted")
         );
     }
 }

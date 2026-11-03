@@ -1,6 +1,25 @@
-# Settings for Azure trusted signing certifiates
+# Settings for Azure Trusted Signing certificates.
 
 [trust]
+trust_config = '''//id-kp-emailProtection
+1.3.6.1.5.5.7.3.4
+//id-kp-documentSigning
+1.3.6.1.5.5.7.3.36
+//id-kp-timeStamping
+1.3.6.1.5.5.7.3.8
+//id-kp-OCSPSigning
+1.3.6.1.5.5.7.3.9
+// MS C2PA Signing
+1.3.6.1.4.1.311.76.59.1.9
+1.2.840.113583.1.1.7
+// MS Timestamping
+1.3.6.1.4.1.311.97.1.3.1.29433.35007.34545.16815.37291.11644.53265.56135
+// Signer Specific EKUs
+1.3.6.1.4.1.311.97.1.3.1.29433.35007.34545.16815.37291.11644.53265.56135'''
+
+[[trust.anchors]]
+trust_kind = "manifest"
+trust_uri = "system_anchors"
 trust_anchors = '''-----BEGIN CERTIFICATE-----
 MIIF5DCCA8ygAwIBAgIQIirlcpCVi5BClPXKKwZLpTANBgkqhkiG9w0BAQwFADCB
 gjELMAkGA1UEBhMCVVMxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjFT
@@ -34,8 +53,11 @@ xJZPlFUCrtoxN21og1yYAfm01hi+uZ3QChxaUBNhcTVgcxqxaFTCMknTvRACbrXW
 8VGl81Vn8G9cCbe+LYaimWViNKCx0k2wBkCiBRwMLGh7tCnvcqaq1mabyTJt7J4G
 sibkXZHC26Ifyx+XNagOoQaIhY4k/co/l+5FFJGpZOcfcMnqnJOABDCXPYlerBZ6
 FeDDrKZ8pK5TdlXx7RRRfS93s+US9iut
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
+-----END CERTIFICATE-----'''
+
+[[trust.anchors]]
+trust_kind = "tsa"
+trust_anchors = '''-----BEGIN CERTIFICATE-----
 MIIGtDCCBJygAwIBAgIQDcesVwX/IZkuQEMiDDpJhjANBgkqhkiG9w0BAQsFADBi
 MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
 d3cuZGlnaWNlcnQuY29tMSEwHwYDVQQDExhEaWdpQ2VydCBUcnVzdGVkIFJvb3Qg
@@ -73,22 +95,6 @@ l4KSFLFk43esaUeqGkH/wyW4N7OigizwJWeukcyIPbAvjSabnf7+Pu0VrFgoiovR
 Diyx3zEdmcif/sYQsfch28bZeUz2rtY/9TCA6TD8dC3JE3rYkrhLULy7Dc90G6e8
 BlqmyIjlgp2+VqsS9/wQD7yFylIz0scmbKvFoW2jNrbM1pD2T7m3XA==
 -----END CERTIFICATE-----'''
-
-trust_config = '''//id-kp-emailProtection
-1.3.6.1.5.5.7.3.4
-//id-kp-documentSigning
-1.3.6.1.5.5.7.3.36
-//id-kp-timeStamping
-1.3.6.1.5.5.7.3.8
-//id-kp-OCSPSigning
-1.3.6.1.5.5.7.3.9
-// MS C2PA Signing
-1.3.6.1.4.1.311.76.59.1.9
-1.2.840.113583.1.1.7
-// MS Timestamping
-1.3.6.1.4.1.311.97.1.3.1.29433.35007.34545.16815.37291.11644.53265.56135
-// Signer Specific EKUs
-1.3.6.1.4.1.311.97.1.3.1.29433.35007.34545.16815.37291.11644.53265.56135'''
 
 [verify]
 verify_after_reading = true

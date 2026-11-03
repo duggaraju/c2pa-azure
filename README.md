@@ -195,6 +195,13 @@ See [azure/deploy/README.md](azure/deploy/README.md) for the AKS and Azure Funct
 
 Contributions are welcome! Please open an issue or submit a pull request on GitHub.
 
+Run the library tests with `cargo test -p c2pa-azure -p c2pa-cloud --all-features`.
+The signed fixture uses [test_data/settings.toml](test_data/settings.toml), which
+configures separate `trust.anchors` entries for manifest signers (`trust_kind =
+"manifest"`) and timestamp authorities (`trust_kind = "tsa"`). The legacy
+`trust.trust_anchors` bundle only establishes manifest-signer trust, not timestamp
+trust. Both are needed to validate the fixture after its signing certificate expires.
+
 ## License
 
 This project is licensed under the MIT License.
