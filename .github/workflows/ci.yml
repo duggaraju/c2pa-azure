@@ -42,8 +42,19 @@ jobs:
       - name: Test
         run: cargo test -p c2pa-azure -p c2pa-cloud --all-features
 
-      - name: Package c2pa-azure
-        run: cargo publish -p c2pa-azure --dry-run
+      - name: Check c2pa-cloud preview version
+        run: |
+          METADATA=$(cargo metadata --no-deps --format-version 1)
+          AZURE_VERSION=$(jq -r '.packages[] | select(.name == "c2pa-azure") | .version' <<< "$METADATA")
+          CLOUD_VERSION=$(jq -r '.packages[] | select(.name == "c2pa-cloud") | .version' <<< "$METADATA")
+          AZURE_REQUIREMENT=$(jq -r '.packages[] | select(.name == "c2pa-cloud") | .dependencies[] | select(.name == "c2pa-azure") | .req' <<< "$METADATA")
+          if [ "$CLOUD_VERSION" != "$AZURE_VERSION-preview" ] || [ "$AZURE_REQUIREMENT" != "^$AZURE_VERSION" ]; then
+            echo "lib/Cargo.toml must use version $AZURE_VERSION-preview and require c2pa-azure $AZURE_VERSION (found $CLOUD_VERSION, $AZURE_REQUIREMENT)"
+            exit 1
+          fi
+
+      - name: Package c2pa-azure and c2pa-cloud
+        run: cargo publish -p c2pa-azure -p c2pa-cloud --dry-run
 
   examples:
     runs-on: ubuntu-26.04

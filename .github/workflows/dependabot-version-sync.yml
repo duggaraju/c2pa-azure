@@ -61,19 +61,21 @@ jobs:
           C2PA_VERSION="${{ steps.c2pa.outputs.version }}"
           sed -i "/\[workspace\.package\]/,/^\[/s/^version = \".*\"/version = \"$C2PA_VERSION\"/" Cargo.toml
           sed -i "s/^c2pa = { version = \"[^\"]*\"/c2pa = { version = \"$C2PA_VERSION\"/" Cargo.toml
+          sed -i "/^\[package\]/,/^\[/s/^version = \".*\"/version = \"$C2PA_VERSION-preview\"/" lib/Cargo.toml
+          sed -i "s/^c2pa-azure = { version = \"[^\"]*\"/c2pa-azure = { version = \"$C2PA_VERSION\"/" lib/Cargo.toml
           sed -i -E \
             -e "s|(c2pa-rs )[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
             -e "s|(c2pa--rs-)[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
             -e "s|(crates/c2pa/)[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
             README.md
           cargo check --workspace
-          echo "Synchronized workspace, c2pa, and README versions to $C2PA_VERSION"
+          echo "Synchronized workspace, c2pa, c2pa-cloud, and README versions to $C2PA_VERSION"
 
       - name: Commit and push
         if: steps.c2pa.outputs.version != steps.workspace.outputs.version || steps.c2pa.outputs.version != steps.c2pa_requirement.outputs.version || steps.c2pa.outputs.version != steps.readme.outputs.version
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.toml Cargo.lock README.md
+          git add Cargo.toml Cargo.lock README.md lib/Cargo.toml
           git commit -m "chore: bump workspace version to ${{ steps.c2pa.outputs.version }}"
           git push

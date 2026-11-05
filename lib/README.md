@@ -1,7 +1,8 @@
 # c2pa-cloud
 
-> **Preview.** `c2pa-cloud` is not published yet. Until it is, keep using
-> [`c2pa-azure`](../azure/lib) for Azure Trusted Signing.
+> **Preview.** `c2pa-cloud` is published as a pre-release (`<version>-preview`)
+> alongside each [`c2pa-azure`](../azure/lib) release, and its API may still
+> change. For Azure Trusted Signing alone, `c2pa-azure` remains the stable choice.
 
 Rust helpers for issuing [C2PA](https://c2pa.org) signatures with cloud
 signing services. Each cloud lives behind a feature flag and exposes a signer
@@ -16,6 +17,14 @@ the same whichever cloud you sign with.
 
 No cloud is enabled by default. `pdf` and `rust_native_crypto` are default
 features; use `--no-default-features --features pdf,openssl` for OpenSSL.
+
+Cargo only selects pre-release versions you ask for explicitly, so name the
+preview version (see [crates.io](https://crates.io/crates/c2pa-cloud/versions)
+for the latest):
+
+```toml
+c2pa-cloud = { version = "<version>-preview", features = ["aws"] }
+```
 
 AWS KMS and Cloud KMS only hold the private key. Have a C2PA-conformant
 certificate authority issue a certificate for the KMS public key and pass the

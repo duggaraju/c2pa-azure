@@ -11,10 +11,13 @@
 //! | `aws`   | [`aws`]   | AWS KMS asymmetric keys | Supplied by you (PEM) |
 //! | `gcp`   | [`gcp`]   | Google Cloud KMS / Cloud HSM | Supplied by you (PEM) |
 //!
-//! No cloud is enabled by default; turn on the ones you need:
+//! No cloud is enabled by default; turn on the ones you need. The crate is a
+//! preview published as a pre-release (`<version>-preview`) alongside each
+//! `c2pa-azure` release, so name that version explicitly; Cargo does not pick
+//! pre-releases otherwise:
 //!
 //! ```toml
-//! c2pa-cloud = { version = "0.91", features = ["aws"] }
+//! c2pa-cloud = { version = "<version>-preview", features = ["aws"] }
 //! ```
 //!
 //! AWS KMS and Cloud KMS only hold the private key. Have a C2PA-conformant

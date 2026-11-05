@@ -1,17 +1,17 @@
 [package]
 name = "c2pa-cloud"
-version = { workspace = true }
+# Preview: published as a pre-release that tracks the workspace (c2pa-azure)
+# version. The release workflows keep this and the c2pa-azure requirement below
+# in sync, so keep the `-preview` suffix and the `version = ` layout.
+version = "0.91.11-preview"
 edition = "2024"
-description = "Rust helpers for issuing C2PA signatures with cloud signing services: Azure Trusted Signing, AWS KMS, and Google Cloud KMS."
+description = "Preview: Rust helpers for issuing C2PA signatures with cloud signing services: Azure Trusted Signing, AWS KMS, and Google Cloud KMS."
 repository = "https://github.com/duggaraju/c2pa-azure"
 homepage = "https://github.com/duggaraju/c2pa-azure"
 documentation = "https://docs.rs/c2pa-cloud"
 keywords = ["c2pa", "azure", "aws", "gcp", "content-authenticity"]
 license-file = "../LICENSE"
 readme = "README.md"
-# Not published until the multi-cloud API is ready; c2pa-azure keeps releasing from azure/lib.
-# Before publishing, add a `version` to the c2pa-azure dependency below.
-publish = false
 
 [package.metadata.docs.rs]
 all-features = true
@@ -35,7 +35,7 @@ log = { workspace = true }
 sha2 = { version = "0.11.0", optional = true }
 url = "2.5.8"
 
-c2pa-azure = { path = "../azure/lib", default-features = false, optional = true }
+c2pa-azure = { version = "0.91.11", path = "../azure/lib", default-features = false, optional = true }
 aws-config = { workspace = true, optional = true }
 aws-sdk-kms = { workspace = true, optional = true }
 google-cloud-kms-v1 = { workspace = true, optional = true }

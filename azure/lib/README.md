@@ -46,7 +46,7 @@ Supply an Azure `TokenCredential` and construct `SigningOptions` directly, or us
 
 The [repository](https://github.com/duggaraju/c2pa-azure) includes CLI, HTTP service, and storage-worker examples, plus Azure deployment instructions.
 
-It also contains the preview `c2pa-cloud` crate for Azure, AWS KMS, and Google Cloud KMS. That crate is not yet published; its `azure` feature re-exports this crate's signer. Existing `c2pa-azure` users do not need to migrate.
+It also contains the preview [`c2pa-cloud`](https://crates.io/crates/c2pa-cloud) crate for Azure, AWS KMS, and Google Cloud KMS, published as a pre-release (`<version>-preview`) alongside each `c2pa-azure` release; its `azure` feature re-exports this crate's signer. Existing `c2pa-azure` users do not need to migrate.
 
 ## License
 

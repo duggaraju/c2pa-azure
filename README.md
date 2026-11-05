@@ -2,14 +2,14 @@
 
 [![c2pa-azure crate version](https://img.shields.io/crates/v/c2pa-azure.svg?label=c2pa-azure)](https://crates.io/crates/c2pa-azure)
 [![Rust docs check](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml/badge.svg)](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml)
-**|** [![c2pa-rs 0.91.7](https://img.shields.io/badge/c2pa--rs-0.91.7-blue)](https://crates.io/crates/c2pa/0.91.7)
+**|** [![c2pa-rs 0.91.11](https://img.shields.io/badge/c2pa--rs-0.91.11-blue)](https://crates.io/crates/c2pa/0.91.11)
 
 Rust libraries and examples for signing C2PA content credentials using Azure Trusted Signing, AWS KMS, or Google Cloud KMS, built on `c2pa-rs`.
 
 The repository contains two crates:
 
 - **[`c2pa-azure`](azure/lib/README.md)**: the published Azure Trusted Signing crate. Existing users can continue using it without changes.
-- **[`c2pa-cloud`](lib/README.md)**: a preview multi-cloud crate, not yet published. Its `azure` feature re-exports the same Azure signer from `c2pa-azure`; its `aws` and `gcp` features provide KMS signers.
+- **[`c2pa-cloud`](lib/README.md)**: a preview multi-cloud crate, published as a pre-release (`<version>-preview`) alongside each `c2pa-azure` release. Its `azure` feature re-exports the same Azure signer from `c2pa-azure`; its `aws` and `gcp` features provide KMS signers.
 
 ## Features
 
@@ -27,7 +27,7 @@ The repository contains two crates:
 | Path | Contents |
 |------|----------|
 | [azure/lib](azure/lib) | The published `c2pa-azure` crate (Azure Trusted Signing) |
-| [lib](lib) | `c2pa-cloud` (preview, not yet published): one crate with an Azure, AWS KMS or Google Cloud KMS signer per feature flag. See [lib/README.md](lib/README.md). |
+| [lib](lib) | `c2pa-cloud` (preview, published as `<version>-preview`): one crate with an Azure, AWS KMS or Google Cloud KMS signer per feature flag. See [lib/README.md](lib/README.md). |
 | [examples](examples) | Cloud-agnostic examples; the cloud is picked with the `azure` (default), `aws` or `gcp` feature |
 | [azure/deploy](azure/deploy), [aws/deploy](aws/deploy), [gcp/deploy](gcp/deploy) | Per-cloud hosting and deployment files for the examples |
 

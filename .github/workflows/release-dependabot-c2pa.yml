@@ -76,6 +76,8 @@ jobs:
         run: |
           sed -i "/\[workspace\.package\]/,/^\[/s/^version = \".*\"/version = \"$C2PA_VERSION\"/" Cargo.toml
           sed -i "s/^c2pa = { version = \"[^\"]*\"/c2pa = { version = \"$C2PA_VERSION\"/" Cargo.toml
+          sed -i "/^\[package\]/,/^\[/s/^version = \".*\"/version = \"$C2PA_VERSION-preview\"/" lib/Cargo.toml
+          sed -i "s/^c2pa-azure = { version = \"[^\"]*\"/c2pa-azure = { version = \"$C2PA_VERSION\"/" lib/Cargo.toml
           sed -i -E \
             -e "s|(c2pa-rs )[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
             -e "s|(c2pa--rs-)[0-9]+\.[0-9]+\.[0-9]+|\1$C2PA_VERSION|" \
@@ -85,9 +87,11 @@ jobs:
           WORKSPACE_VERSION=$(sed -n '/\[workspace\.package\]/,/^\[/{/^version\s*=/{s/.*"\([^"]*\)".*/\1/p}}' Cargo.toml)
           C2PA_REQUIREMENT=$(sed -n 's/^c2pa = { version = "\([^"]*\)".*/\1/p' Cargo.toml)
           README_VERSION=$(sed -n 's/.*c2pa-rs \([0-9][0-9.]*\).*/\1/p' README.md | head -n 1)
+          CLOUD_VERSION=$(sed -n '/^\[package\]/,/^\[/{s/^version = "\([^"]*\)".*/\1/p}' lib/Cargo.toml)
+          CLOUD_AZURE_REQUIREMENT=$(sed -n 's/^c2pa-azure = { version = "\([^"]*\)".*/\1/p' lib/Cargo.toml)
 
-          if [ -z "$WORKSPACE_VERSION" ] || [ -z "$C2PA_REQUIREMENT" ] || [ -z "$README_VERSION" ]; then
-            echo "Could not extract declared c2pa, workspace, or README version"
+          if [ -z "$WORKSPACE_VERSION" ] || [ -z "$C2PA_REQUIREMENT" ] || [ -z "$README_VERSION" ] || [ -z "$CLOUD_VERSION" ] || [ -z "$CLOUD_AZURE_REQUIREMENT" ]; then
+            echo "Could not extract declared c2pa, workspace, README, or c2pa-cloud version"
             exit 1
           fi
 
@@ -106,6 +110,16 @@ jobs:
             exit 1
           fi
 
+          if [ "$CLOUD_VERSION" != "$C2PA_VERSION-preview" ]; then
+            echo "c2pa-cloud version $CLOUD_VERSION does not match $C2PA_VERSION-preview"
+            exit 1
+          fi
+
+          if [ "$CLOUD_AZURE_REQUIREMENT" != "$C2PA_VERSION" ]; then
+            echo "c2pa-cloud's c2pa-azure requirement $CLOUD_AZURE_REQUIREMENT does not match $C2PA_VERSION"
+            exit 1
+          fi
+
           cargo check --workspace --locked
 
       - name: Commit synchronized versions
@@ -114,14 +128,14 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           C2PA_VERSION: ${{ steps.release.outputs.c2pa_version }}
         run: |
-          if git diff --quiet -- Cargo.toml Cargo.lock README.md; then
+          if git diff --quiet -- Cargo.toml Cargo.lock README.md lib/Cargo.toml; then
             echo "Release versions are already synchronized"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Cargo.toml Cargo.lock README.md
+          git add Cargo.toml Cargo.lock README.md lib/Cargo.toml
           git commit -m "chore: bump workspace version to $C2PA_VERSION"
           git push origin "HEAD:$BASE_REF"
 
