@@ -41,7 +41,7 @@
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let signed = File::open("signed.png")?;
-//!     let reader = Reader::from_stream_async("png", signed).await?;
+//!     let reader = Reader::default().with_stream_async("png", signed).await?;
 //!     println!("Manifest Store: {}", reader.json());
 //!     Ok(())
 //! }
