@@ -3,7 +3,7 @@ name = "c2pa-cloud"
 # Preview: published as a pre-release that tracks the workspace (c2pa-azure)
 # version. The release workflows keep this and the c2pa-azure requirement below
 # in sync, so keep the `-preview` suffix and the `version = ` layout.
-version = "0.91.11-preview"
+version = "0.92.0-preview"
 edition = "2024"
 description = "Preview: Rust helpers for issuing C2PA signatures with cloud signing services: Azure Trusted Signing, AWS KMS, and Google Cloud KMS."
 repository = "https://github.com/duggaraju/c2pa-azure"
@@ -35,7 +35,7 @@ log = { workspace = true }
 sha2 = { version = "0.11.0", optional = true }
 url = "2.5.8"
 
-c2pa-azure = { version = "0.91.11", path = "../azure/lib", default-features = false, optional = true }
+c2pa-azure = { version = "0.92.0", path = "../azure/lib", default-features = false, optional = true }
 aws-config = { workspace = true, optional = true }
 aws-sdk-kms = { workspace = true, optional = true }
 google-cloud-kms-v1 = { workspace = true, optional = true }

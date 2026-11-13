@@ -1156,7 +1156,7 @@ dependencies = [
 
 [[package]]
 name = "c2pa-azure"
-version = "0.91.11"
+version = "0.92.0"
 dependencies = [
  "async-trait",
  "azure_core",
@@ -1176,7 +1176,7 @@ dependencies = [
 
 [[package]]
 name = "c2pa-cloud"
-version = "0.91.11-preview"
+version = "0.92.0-preview"
 dependencies = [
  "async-trait",
  "aws-config",

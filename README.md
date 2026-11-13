@@ -2,7 +2,7 @@
 
 [![c2pa-azure crate version](https://img.shields.io/crates/v/c2pa-azure.svg?label=c2pa-azure)](https://crates.io/crates/c2pa-azure)
 [![Rust docs check](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml/badge.svg)](https://github.com/duggaraju/c2pa-azure/actions/workflows/docs.yml)
-**|** [![c2pa-rs 0.91.11](https://img.shields.io/badge/c2pa--rs-0.91.11-blue)](https://crates.io/crates/c2pa/0.91.11)
+**|** [![c2pa-rs 0.92.0](https://img.shields.io/badge/c2pa--rs-0.92.0-blue)](https://crates.io/crates/c2pa/0.92.0)
 
 Rust libraries and examples for signing C2PA content credentials using Azure Trusted Signing, AWS KMS, or Google Cloud KMS, built on `c2pa-rs`.
 
