@@ -19,4 +19,4 @@ futures = { workspace = true }
 log = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true }
-warp = { version = "0.4.3", features = ["server"] }
+warp = { version = "0.4.4", features = ["server"] }
