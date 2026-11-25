@@ -11,47 +11,47 @@ members = [
 ]
 
 [workspace.package]
-version = "0.92.2"
+version = "0.92.3"
 
 [workspace.dependencies]
-anyhow = { version = "1.0.104", features = ["backtrace"] }
-async-trait = "0.1.91"
-aws-config = { version = "1.13.0", default-features = false, features = [
+anyhow = { version = "1.0.105", features = ["backtrace"] }
+async-trait = "0.1.92"
+aws-config = { version = "1.13.4", default-features = false, features = [
     "behavior-version-latest",
     "credentials-process",
     "default-https-client",
     "rt-tokio",
     "sso",
 ] }
-aws-sdk-kms = { version = "1.129.0", default-features = false, features = [
+aws-sdk-kms = { version = "1.134.0", default-features = false, features = [
     "default-https-client",
     "rt-tokio",
 ] }
-aws-sdk-s3 = { version = "1.157.0", default-features = false, features = [
+aws-sdk-s3 = { version = "1.162.0", default-features = false, features = [
     "default-https-client",
     "rt-tokio",
 ] }
-aws-sdk-sqs = { version = "1.119.0", default-features = false, features = [
+aws-sdk-sqs = { version = "1.123.0", default-features = false, features = [
     "default-https-client",
     "rt-tokio",
 ] }
 azure_core = "1.1.0"
 azure_identity = "1.0.0"
-env_logger = "0.11.11"
+env_logger = "0.11.12"
 envconfig = "0.11.1"
-google-cloud-kms-v1 = "1.16.0"
-google-cloud-storage = "1.21.0"
-futures = "0.3.33"
-log = "0.4.33"
+google-cloud-kms-v1 = "1.17.0"
+google-cloud-storage = "1.22.0"
+futures = "0.3.34"
+log = "0.4.35"
 tempfile = "3.27.0"
-tokio = { version = "1.53.1", features = [
+tokio = { version = "1.54.1", features = [
     "rt",
     "rt-multi-thread",
     "net",
     "macros",
     "io-util",
 ] }
-c2pa = { version = "0.92.2", features = [
+c2pa = { version = "0.92.3", features = [
     "add_thumbnails",
     "file_io",
     "fetch_remote_manifests",

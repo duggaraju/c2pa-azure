@@ -4,7 +4,6 @@ version = { workspace = true }
 edition = "2024"
 description = "Rust helpers for issuing C2PA signatures via Azure Trusted Signing."
 repository = "https://github.com/duggaraju/c2pa-azure"
-homepage = "https://github.com/duggaraju/c2pa-azure"
 documentation = "https://docs.rs/c2pa-azure"
 keywords = [
     "c2pa",
@@ -29,12 +28,11 @@ rust_native_crypto = ["c2pa/rust_native_crypto"]
 [dependencies]
 async-trait = { workspace = true }
 cms = "0.2.3"
-bytes = "1.12.1"
+bytes = "1.12.2"
 serde_json = "1.0.154"
-chksum-hash-sha2-384 = "0.0.1"
 serde = { version = "1.0.229", features = ["derive"] }
 envconfig = "0.11.1"
-sha2 = "0.11.1"
+sha2 = "0.11.2"
 c2pa = { workspace = true }
 azure_core = { workspace = true }
 log = { workspace = true }
@@ -42,4 +40,4 @@ log = { workspace = true }
 [dev-dependencies]
 tokio = { workspace = true }
 azure_identity = { workspace = true }
-url = "2.5.8"
+url = "2.5.9"
